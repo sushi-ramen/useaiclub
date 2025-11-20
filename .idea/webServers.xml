@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="7248ed24-1226-42fb-93b6-992fe3da2c62" name="useaiclub.static.jp" url="https://useaiclub.static.jp">
+        <fileTransfer accessType="FTPS" host="sv10.static.ne.jp" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" enabledFtpsProtocols="TLSv1,TLSv1.1,TLSv1.2" passiveMode="true" shareSSLContext="true">
+              <option name="ftpsDisabledTls13" value="true" />
+            </advancedOptions>
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
