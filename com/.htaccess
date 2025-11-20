@@ -1,0 +1,16 @@
+#SSLREDIRECT
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTPS} !on
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L]
+</IfModule>
+#SSLREDIRECT
+#DOMAINREDIRECT
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{HTTP_HOST} ^useaiclub.static.jp
+RewriteRule ^(.*) http://useaiclub.com/$1 [R=302,L]
+</IfModule>
+#DOMAINREDIRECT
+SetEnvIf Request_URI ".*" Ngx_Cache_NoCacheMode=off
+SetEnvIf Request_URI ".*" Ngx_Cache_StaticMode
