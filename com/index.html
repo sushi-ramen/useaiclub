@@ -3,481 +3,695 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UseAIクラブ | 生成AIユーザーのための交流コミュニティ</title>
-
+    <title>useAIクラブ | AIを「使える」に変えるコミュニティ</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
-
+    <!-- 見出し用Webフォント（英数字用として利用） -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        /* =========================================
+           1. 全体ルール & カラー・フォント定義
+           ========================================= */
+        :root {
+            /* --- カラーパレット --- */
+            /* ベース（60%）: 明るいクリーム〜ごく薄いオレンジ */
+            --color-base: #FFF7ED;       /* メイン背景 */
+            --color-base-alt: #FFF3E8;   /* セクション背景（濃淡用） */
+            --color-surface: #FFFFFF;    /* カード・白枠 */
+
+            /* メイン（30%）: 落ち着いたグリーン */
+            --color-primary: #2F6F5C;
+            --color-primary-hover: #245748;
+            --color-primary-light: #E6F0ED; /* ホバー背景用などの極薄グリーン */
+
+            /* アクセント（10%）: あたたかいオレンジ〜コーラル */
+            --color-accent: #F97316;
+
+            /* テキスト（グレー系例外） */
+            --text-heading: #111827;
+            --text-body: #374151;
+
+            /* --- フォントスタック設定 --- */
+            /* 本文・UI用: システムサンセリフスタック */
+            --font-stack-body: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+
+            /* 見出し用: Webフォント(Inter) + システムスタック */
+            --font-stack-heading: 'Inter', var(--font-stack-body);
+
+            /* ヒーロー見出し用（新規）: 日本語ゴシック優先スタック */
+            /* 記号の浮きを防ぐため、ヒラギノ・メイリオ・游ゴシックを最優先 */
+            --font-stack-hero: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, "Yu Gothic", YuGothic, "Helvetica Neue", Arial, sans-serif;
+        }
+
         body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            background-color: #f3f4f6; /* 明るいグレー */
+            /* グローバルフォント指定 */
+            font-family: var(--font-stack-body);
+            background-color: var(--color-base);
+            color: var(--text-body);
+            overflow-x: hidden;
+            cursor: none; /* デフォルトカーソル非表示 */
+            padding-top: 80px;
         }
 
-        /* アクセント用グラデーション */
-        .ai-gradient-bg {
-            background: linear-gradient(135deg, #4f46e5 0%, #1e40af 100%);
+        /* 見出しにはブランドフォント（Inter）を適用 */
+        h1, h2, h3, h4, h5, h6, .brand-font {
+            font-family: var(--font-stack-heading);
+            color: var(--text-heading);
         }
 
-        .ai-text-gradient {
-            background-image: linear-gradient(45deg, #818cf8, #3b82f6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-fill-color: transparent;
+        /* ヒーローエリア専用フォントクラス */
+        .hero-jp-font {
+            font-family: var(--font-stack-hero) !important;
         }
 
-        @keyframes pulse-light {
-            0%, 100% { opacity: 0.2; }
-            50% { opacity: 0.8; }
+        /* =========================================
+           カスタムカーソル
+           ========================================= */
+        .custom-cursor {
+            pointer-events: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 1rem;
+            height: 1rem;
+            background-color: var(--color-accent); /* アクセントカラーを使用 */
+            border-radius: 50%;
+            opacity: 0.8;
+            z-index: 9999;
+            box-shadow: 0 2px 10px rgba(249, 115, 22, 0.4);
+            transition: width 0.2s, height 0.2s, opacity 0.2s, background-color 0.2s, transform 0.1s ease-out;
+            will-change: transform;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 900;
+            font-size: 1.2rem;
+            white-space: nowrap;
+            /* カーソル内の文字も見出し用フォントで */
+            font-family: var(--font-stack-heading);
         }
 
-        .animate-pulse-light {
-            animation: pulse-light 2s infinite ease-in-out;
+        /* インタラクティブ要素ホバー時はメインカラー（グリーン）に */
+        .interactive:hover ~ .custom-cursor,
+        a:hover ~ .custom-cursor,
+        button:hover ~ .custom-cursor {
+            width: 2.5rem;
+            height: 2.5rem;
+            opacity: 0.3;
+            background-color: var(--color-primary);
+        }
+
+        /* =========================================
+           ヘッダー & ヒーロー背景
+           ========================================= */
+        /* ヘッダー背景はベース色 */
+        #main-nav {
+            background-color: rgba(255, 247, 237, 0.95); /* #FFF7ED の透過 */
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #F3E8DB;
+        }
+
+        /* ヒーロー背景グラデーション: 上(淡いグリーン) -> 下(クリーム) */
+        .hero-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #F2F8F5 0%, var(--color-base) 100%);
+            z-index: 0;
+        }
+
+        /* 背景ドットパターン（薄く） */
+        .noise-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(#D1D5DB 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.4;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* アニメーション */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .scroll-animate.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =========================================
+           ボタンデザイン（統一ルール）
+           ========================================= */
+        /* プライマリ: グリーン塗り＋白文字 */
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: #FFFFFF;
+            border: 2px solid var(--color-primary);
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: inline-block;
+            box-shadow: 0 4px 6px -1px rgba(47, 111, 92, 0.2);
+            font-family: var(--font-stack-body); /* ボタンテキストは読みやすさ重視 */
+        }
+        .btn-primary:hover {
+            background-color: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px -1px rgba(47, 111, 92, 0.3);
+        }
+
+        /* セカンダリ: 白背景＋グリーン枠＋グリーン文字 */
+        .btn-secondary {
+            background-color: #FFFFFF;
+            color: var(--color-primary);
+            border: 2px solid var(--color-primary);
+            padding: 0.75rem 2rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+            display: inline-block;
+            font-family: var(--font-stack-body);
+        }
+        .btn-secondary:hover {
+            background-color: var(--color-primary-light);
+            transform: translateY(-2px);
+        }
+
+        /* =========================================
+           カード & UI要素
+           ========================================= */
+        .card-base {
+            background-color: var(--color-surface);
+            border-radius: 1rem;
+            border: 1px solid #E5E7EB; /* 薄いグレー枠 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-base:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            border-color: #D1D5DB;
+        }
+
+        /* ナビゲーションリンク */
+        .nav-link {
+            position: relative;
+            color: var(--text-body);
+            font-weight: 600;
+            transition: color 0.3s ease;
+            font-family: var(--font-stack-heading); /* メニュー等は少し特徴的に */
+        }
+        .nav-link:hover {
+            color: var(--color-primary);
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: var(--color-primary); /* リンク下線もグリーン */
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* テキスト強調色クラス */
+        .text-primary { color: var(--color-primary); }
+        .text-accent { color: var(--color-accent); }
+        .text-heading { color: var(--text-heading); }
+        .text-body { color: var(--text-body); }
+
+        .bg-base-alt { background-color: var(--color-base-alt); }
+
+        /* ラベル・バッジ */
+        .badge-accent {
+            background-color: #FFF7ED; /* ベース色 */
+            color: var(--color-accent);
+            border: 1px solid var(--color-accent);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            font-family: var(--font-stack-body);
+        }
+
+        /* ロゴなど特定クラス用 */
+        .brand-text {
+            font-family: var(--font-stack-heading);
         }
     </style>
 </head>
-<body class="text-gray-900 antialiased">
+<body>
 
-<!-- ヘッダー -->
-<header class="bg-white/90 backdrop-blur border-b border-gray-100 sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center h-16">
-            <!-- ロゴ -->
-            <a href="#" class="flex items-center space-x-2">
-                <div class="h-8 w-8 rounded-xl ai-gradient-bg flex items-center justify-center text-white text-sm font-bold">
-                    UA
-                </div>
-                <span class="text-xl font-semibold tracking-tight">
-            UseAI<span class="text-gray-500">クラブ</span>
-          </span>
+<!-- カスタムカーソル -->
+<div class="custom-cursor" id="custom-cursor"></div>
+
+<!-- 固定ヘッダー -->
+<nav class="fixed top-0 left-0 w-full z-50 h-20 flex items-center transition-all duration-300" id="main-nav">
+    <div class="container mx-auto px-4 flex justify-between items-center">
+        <!-- ロゴ: USE(グリーン) AI(ダークグレー) CLUB(オレンジ) -->
+        <a href="#" class="text-2xl font-black uppercase tracking-tight interactive flex items-center gap-1 brand-text">
+            <span class="text-primary">USE</span>
+            <span class="text-heading">AI</span>
+            <span class="text-accent">CLUB</span>
+        </a>
+
+        <!-- PCメニュー -->
+        <div class="hidden md:flex items-center gap-8">
+            <a href="#about" class="nav-link interactive">About</a>
+            <a href="#events" class="nav-link interactive">Events</a>
+            <a href="#kids" class="nav-link interactive">Kids</a>
+            <a href="#tools-prompts" class="nav-link interactive">Tools</a>
+            <!-- ヘッダーボタン: Joinだけメイングリーンの塗り -->
+            <a href="#join" class="btn-primary text-sm py-2 px-6 interactive shadow-none">
+                Join
             </a>
-
-            <!-- ナビ (PC) -->
-            <nav class="hidden md:flex items-center space-x-8 text-sm font-medium">
-                <a href="#about" class="text-gray-600 hover:text-gray-900 transition">クラブ紹介</a>
-                <a href="#events" class="text-gray-600 hover:text-gray-900 transition">交流会・イベント</a>
-                <a href="#join" class="text-gray-600 hover:text-gray-900 transition">参加方法</a>
-            </nav>
-
-            <!-- CTA -->
-            <div class="hidden md:block">
-                <a href="#events" class="inline-flex items-center rounded-full px-4 py-2 text-sm font-semibold text-white ai-gradient-bg shadow-sm hover:opacity-90 transition">
-                    最新イベントを見る
-                </a>
-            </div>
-
-            <!-- モバイルメニュー ボタン -->
-            <button id="mobile-menu-button"
-                    class="md:hidden p-2 rounded-md text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    aria-expanded="false">
-                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-            </button>
         </div>
+
+        <!-- モバイルメニューアイコン -->
+        <button class="md:hidden text-heading interactive p-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </div>
+</nav>
+
+<!-- ヒーローセクション -->
+<!-- 背景: 上=薄いグリーン, 下=クリーム -->
+<header class="relative h-[calc(100vh-80px)] flex flex-col justify-center items-center text-center overflow-hidden">
+    <div class="hero-bg">
+        <div class="noise-overlay"></div>
+        <!-- 装飾円: グリーン系で統一 -->
+        <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-[#2F6F5C] rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse"></div>
+        <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#3B6B5C] rounded-full mix-blend-multiply filter blur-3xl opacity-10"></div>
     </div>
 
-    <!-- モバイルメニュー -->
-    <div id="mobile-menu" class="hidden md:hidden border-t border-gray-100 bg-white">
-        <div class="px-4 py-3 space-y-1">
-            <a href="#about" class="block px-2 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">クラブ紹介</a>
-            <a href="#events" class="block px-2 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">交流会・イベント</a>
-            <a href="#join" class="block px-2 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-50">参加方法</a>
-            <a href="#events" class="block mt-2 text-center rounded-full px-3 py-2 text-sm font-semibold text-white ai-gradient-bg hover:opacity-90">
-                最新イベントを見る
+    <div class="relative z-10 p-4 max-w-5xl mx-auto">
+        <div class="mb-8 interactive" id="hero-text-wrapper" style="transform-style: preserve-3d; transition: transform 0.1s ease-out;">
+            <!-- サブタイトル: メイングリーン + 日本語ゴシック優先フォント -->
+            <p class="text-primary font-bold tracking-widest uppercase mb-4 text-sm md:text-base hero-jp-font">
+                Welcome to the Community
+            </p>
+            <!-- メイン見出し: 指定色 + 日本語ゴシック優先フォント -->
+            <h1 class="text-4xl md:text-6xl lg:text-7xl font-black leading-tight hero-jp-font">
+                <span class="text-heading">AIを</span><span class="text-primary">「知る」</span><span class="text-heading">から</span><br>
+                <span class="text-accent">「使いこなす」</span><span class="text-heading">へ。</span>
+            </h1>
+        </div>
+
+        <!-- 説明文: #374151(text-body)の1色のみ、装飾なし -->
+        <p class="mt-6 text-lg md:text-xl text-body font-medium interactive max-w-2xl mx-auto leading-relaxed">
+            学び合い・試し合い・共有し合う。<br>
+            初心者からプロまで、みんなでAIを楽しむコミュニティ。
+        </p>
+
+        <div class="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <!-- プライマリボタン: グリーン塗り -->
+            <a href="#join" class="btn-primary interactive">
+                無料で参加してみる
             </a>
+            <!-- セカンダリボタン: グリーン枠 -->
+            <a href="#about" class="btn-secondary interactive">
+                もっと詳しく見る
+            </a>
+        </div>
+
+        <!-- ラベル群 -->
+        <div class="mt-12 flex flex-wrap justify-center gap-4 text-sm font-medium">
+            <!-- バッジはアクセント（オレンジ）で統一 -->
+            <span class="badge-accent interactive">🔰 初心者歓迎</span>
+            <span class="badge-accent interactive">👨‍👩‍👧‍👦 親子で参加OK</span>
+            <span class="badge-accent interactive">🤝 オンライン＆オフライン</span>
         </div>
     </div>
 </header>
 
-<main>
-    <!-- Hero -->
-    <section class="bg-white">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 lg:py-28">
-            <div class="grid lg:grid-cols-2 gap-12 lg:items-center">
-                <!-- コピー -->
-                <div>
-                    <div class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-indigo-100">
-                        aaa松本市発・生成AIユーザーコミュニティ
-                    </div>
+<!-- メインコンテンツ -->
+<main class="relative z-10">
 
-                    <h1 class="mt-6 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-                        <span class="block">AIを「ちゃんと使う」</span>
-                        <span class="block mt-1 ai-text-gradient">実践者のためのゆるい集まり</span>
-                    </h1>
-
-                    <p class="mt-6 text-base sm:text-lg text-gray-600 max-w-xl">
-                        具体的な使い方やワークフローを持ち寄って、仕事・副業・学習に直結する生成AIの活用法を一緒に探るコミュニティです。
-                        技術レベルを問わず、気軽に参加できます。
-                    </p>
-
-                    <div class="mt-8 flex flex-col sm:flex-row gap-3">
-                        <a href="#events"
-                           class="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white ai-gradient-bg shadow-sm hover:opacity-90 transition">
-                            今後の交流会をチェック
-                        </a>
-                        <a href="#about"
-                           class="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition">
-                            クラブの特徴を見る
-                        </a>
-                    </div>
-
-                    <p class="mt-4 text-xs text-gray-500">
-                        ※オフライン交流会・もくもく会ともに、単発参加OK／Peatixなどから事前申込制です。
-                    </p>
-                </div>
-
-                <!-- 右カラム：シンプルな「AIダッシュボード」風カード -->
-                <div class="lg:block">
-                    <div class="relative">
-                        <div class="absolute -inset-4 bg-gradient-to-tr from-indigo-100 via-white to-cyan-100 blur-2xl opacity-70"></div>
-                        <div class="relative rounded-2xl bg-white shadow-xl border border-gray-100 p-5 sm:p-6">
-                            <div class="flex items-center justify-between text-xs text-gray-500 mb-4">
-                                <span class="font-semibold text-gray-700">UseAI Session</span>
-                                <span>松本市 / SWEET WORK</span>
-                            </div>
-
-                            <div class="grid grid-cols-3 gap-3 text-xs">
-                                <div class="col-span-2 rounded-xl bg-slate-900 text-slate-50 p-4 flex flex-col justify-between">
-                                    <div class="flex items-center justify-between text-[10px] text-slate-300">
-                                        <span>Prompt Lab</span>
-                                        <span class="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300">LIVE</span>
-                                    </div>
-                                    <p class="mt-2 text-sm font-semibold">
-                                        「今日うまくいった使い方」を持ち寄る
-                                    </p>
-                                    <p class="mt-1 text-[11px] text-slate-300">
-                                        実際の仕事・学習シーンで効いたプロンプトやツール構成を、そのまま共有するセッションです。
-                                    </p>
-                                    <div class="mt-3 h-1.5 w-24 rounded-full bg-emerald-400 animate-pulse-light"></div>
-                                </div>
-
-                                <div class="space-y-3">
-                                    <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                                        <p class="text-[11px] text-gray-500">参加者属性</p>
-                                        <p class="mt-1 text-xs font-semibold text-gray-800">会社員 / フリーランス / 学生</p>
-                                    </div>
-                                    <div class="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                                        <p class="text-[11px] text-gray-500">よく使うツール</p>
-                                        <p class="mt-1 text-xs font-semibold text-gray-800">ChatGPT / Claude / Notion AI ほか</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 flex items-center justify-between border-t border-gray-100 pt-3 text-[11px] text-gray-500">
-                                <span>次回テーマ：仕事効率化の小技</span>
-                                <span class="inline-flex items-center gap-1">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                    Offline Meetup
-                  </span>
-                            </div>
-                        </div>
+    <!-- Section 1: About (背景: ベース色 alt) -->
+    <section id="about" class="py-20 bg-base-alt scroll-margin-top-24">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col lg:flex-row gap-16 items-center">
+                <div class="lg:w-1/2 scroll-animate interactive">
+                    <!-- 見出し: メイングリーン -->
+                    <h2 class="text-4xl font-bold text-primary mb-6">
+                        useAIクラブとは？
+                    </h2>
+                    <div class="prose prose-lg text-body">
+                        <p class="mb-4">
+                            useAIクラブは、AIをもっと身近に、もっと楽しく「使える」ようになるためのコミュニティです。
+                        </p>
+                        <p class="mb-4">
+                            オフライン交流会やオンラインイベントで仲間と出会い、子供向けAI教室で次世代のクリエイターを育て、豊富なAIツールガイドとプロンプト事例集で日々の仕事や学びにAIを取り入れていきます。
+                        </p>
+                        <p>
+                            「ひとりで頑張る」のではなく、「みんなで試してシェアする」ことで、AI活用のハードルをぐっと下げることを目指しています。
+                        </p>
                     </div>
                 </div>
+                <div class="lg:w-1/2 w-full scroll-animate interactive" style="transition-delay: 0.3s;">
+                    <div class="bg-surface p-8 rounded-2xl border border-gray-200 shadow-lg relative overflow-hidden text-center">
+                        <!-- 装飾: 薄いグリーン -->
+                        <div class="absolute -top-10 -right-10 w-40 h-40 bg-[#E6F0ED] rounded-full opacity-70"></div>
 
-            </div>
-        </div>
-    </section>
-
-    <!-- クラブ紹介 -->
-    <section id="about" class="py-16 sm:py-20 bg-gray-50">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-xs font-semibold tracking-[0.2em] text-indigo-600 uppercase">
-                    ABOUT
-                </h2>
-                <p class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                    UseAIクラブが提供する価値
-                </p>
-                <p class="mt-3 text-base text-gray-600 max-w-2xl mx-auto">
-                    技術を「知る」のではなく「使う」ことに特化し、実践的な知恵を持ち寄れる環境を大切にしています。
-                </p>
-            </div>
-
-            <div class="mt-12 grid gap-8 md:grid-cols-3">
-                <!-- 特徴 1 -->
-                <div class="relative bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <div class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-100 text-indigo-600 mb-4">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-base font-semibold text-gray-900">実践アイデアの交換</h3>
-                    <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-                        どんなプロンプトで成果が出たか、どんなツールの組み合わせが便利だったか——現場で効いた具体例を持ち寄ります。
-                    </p>
-                </div>
-
-                <!-- 特徴 2 -->
-                <div class="relative bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <div class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-100 text-indigo-600 mb-4">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-base font-semibold text-gray-900">敷居の低い交流</h3>
-                    <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-                        専門的な技術知識は不要です。お茶やおやつを片手に、初心者から上級者まで気軽に話せる場を目指しています。
-                    </p>
-                </div>
-
-                <!-- 特徴 3 -->
-                <div class="relative bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition">
-                    <div class="inline-flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-100 text-indigo-600 mb-4">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-base font-semibold text-gray-900">もくもく会で集中作業</h3>
-                    <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-                        各自が持ち込んだプロジェクトや試したいツールに集中して取り組める「もくもく会」も開催しています。
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- イベント -->
-    <section id="events" class="py-16 sm:py-20 bg-white">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-xs font-semibold tracking-[0.2em] text-indigo-600 uppercase">
-                    EVENTS
-                </h2>
-                <p class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                    最新の交流会・イベント情報
-                </p>
-                <p class="mt-3 text-base text-gray-600 max-w-2xl mx-auto">
-                    主に松本市内のコワーキングスペースで開催。オフライン交流会ともくもく会があります。
-                </p>
-            </div>
-
-            <div class="mt-12 space-y-6">
-                <!-- イベントカード 1 -->
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition overflow-hidden">
-                    <div class="p-6 sm:flex sm:items-center sm:justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3">
-                  <span class="inline-flex items-center rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">
-                    #9
-                  </span>
-                                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-medium text-emerald-700">
-                    オフライン交流会
-                  </span>
-                            </div>
-                            <h3 class="mt-3 text-base font-semibold text-gray-900">
-                                UseAIクラブ オフライン交流会 #9 in 松本市
-                            </h3>
-                            <p class="mt-1 text-sm text-gray-600">
-                                テーマ：AIを使った仕事効率化の裏ワザ
+                        <div class="relative z-10 py-10">
+                            <p class="text-2xl font-bold text-heading leading-loose brand-text">
+                                オフライン交流会<br>
+                                オンラインイベント<br>
+                                子供向けAI教室<br>
+                                ツールガイド<br>
+                                プロンプト事例
                             </p>
-                            <div class="mt-3 flex flex-wrap gap-4 text-xs text-gray-500">
-                                <div class="flex items-center">
-                                    <svg class="mr-1.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    2025/11/20 (水) 19:00 - 21:00
-                                </div>
-                                <div class="flex items-center">
-                                    <svg class="mr-1.5 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    SWEET WORK (松本市)
-                                </div>
+                            <!-- タグ: メイングリーン -->
+                            <div class="mt-6 inline-block bg-[#2F6F5C] text-white px-6 py-2 rounded-full font-bold text-sm brand-text">
+                                すべてが一つになった場所
                             </div>
                         </div>
-                        <div class="mt-4 sm:mt-0 sm:ml-6 sm:flex-shrink-0">
-                            <a href="#"
-                               class="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white ai-gradient-bg shadow-sm hover:opacity-90 transition">
-                                詳細・申込
-                            </a>
-                        </div>
                     </div>
-                </div>
-
-                <!-- イベントカード 2 -->
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden opacity-60">
-                    <div class="p-6 sm:flex sm:items-center sm:justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-3">
-                  <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                    #8
-                  </span>
-                                <span class="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
-                    もくもく会
-                  </span>
-                            </div>
-                            <h3 class="mt-3 text-base font-semibold text-gray-700">
-                                UseAIクラブ もくもく会 #8
-                            </h3>
-                            <p class="mt-1 text-sm text-gray-500">
-                                各自が持ち寄ったプロジェクトを集中して作業
-                            </p>
-                            <div class="mt-3 flex flex-wrap gap-4 text-xs text-gray-400">
-                                <div class="flex items-center">
-                                    <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    2025/11/06 (水) 19:00 - 21:00
-                                </div>
-                                <div class="flex items-center">
-                                    <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    SWEET WORK (松本市)
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-4 sm:mt-0 sm:ml-6 sm:flex-shrink-0">
-                <span class="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-gray-500 bg-gray-100">
-                  終了
-                </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-8 text-center">
-                <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition">
-                    過去のイベントを見る →
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- 参加方法 -->
-    <section id="join" class="py-16 sm:py-20 bg-gray-50">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center">
-                <h2 class="text-xs font-semibold tracking-[0.2em] text-indigo-600 uppercase">
-                    HOW TO JOIN
-                </h2>
-                <p class="mt-2 text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                    誰でも簡単に参加できます
-                </p>
-                <p class="mt-3 text-base text-gray-600 max-w-2xl mx-auto">
-                    生成AIに興味がある方なら、クラブメンバーでなくても単発参加OK。気軽にお越しください。
-                </p>
-            </div>
-
-            <div class="mt-12 grid gap-8 md:grid-cols-3">
-                <!-- ステップ 1 -->
-                <div class="text-center">
-                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 text-indigo-600 font-bold text-lg mb-4">
-                        1
-                    </div>
-                    <h3 class="text-base font-semibold text-gray-900">イベント情報をチェック</h3>
-                    <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-                        PeatixやSNSで、開催予定の交流会（オフライン交流会 / もくもく会）をチェックします。
-                    </p>
-                </div>
-
-                <!-- ステップ 2 -->
-                <div class="text-center">
-                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 text-indigo-600 font-bold text-lg mb-4">
-                        2
-                    </div>
-                    <h3 class="text-base font-semibold text-gray-900">オンラインで参加登録</h3>
-                    <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-                        参加したいイベントを見つけたら、申し込みページから氏名・連絡先などを入力して登録。
-                    </p>
-                </div>
-
-                <!-- ステップ 3 -->
-                <div class="text-center">
-                    <div class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 text-indigo-600 font-bold text-lg mb-4">
-                        3
-                    </div>
-                    <h3 class="text-base font-semibold text-gray-900">会場で交流スタート</h3>
-                    <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-                        当日は会場に直接お越しください。AIの活用について気軽に話せる仲間が待っています。
-                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA -->
-    <section class="py-16 bg-white border-t border-gray-100">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
-                生成AIの活用を、今日から始めませんか？
-            </h2>
-            <p class="mt-3 text-base text-gray-600">
-                あなたの参加をお待ちしています。
+    <!-- Section 2: Features (背景: ベース色 #FFF7ED) -->
+    <section class="py-20 container mx-auto px-4">
+        <!-- 見出し: メイングリーン -->
+        <h2 class="text-4xl font-bold mb-16 text-center text-primary scroll-animate interactive">
+            useAIクラブでできること
+        </h2>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Card 1: イベント -->
+            <div class="card-base p-8 scroll-animate interactive">
+                <!-- アイコン背景: 薄いグリーン -->
+                <div class="w-16 h-16 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-3xl mb-6">🎉</div>
+                <!-- カード見出し: グリーン -->
+                <h3 class="text-xl font-bold text-primary mb-3">イベント</h3>
+                <p class="text-body text-sm mb-4 leading-relaxed">
+                    オフラインとオンラインの両方で、AIをテーマにした交流会やライトニングトークなどを定期開催します。
+                </p>
+                <ul class="text-xs text-gray-500 space-y-2 font-medium bg-gray-50 p-3 rounded-lg">
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>オフライン交流会</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>AIイベント／勉強会</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>ゆるい雑談・情報交換</li>
+                </ul>
+            </div>
+            <!-- Card 2: 子供向けAI教室 -->
+            <div class="card-base p-8 scroll-animate interactive" style="transition-delay: 0.1s;">
+                <div class="w-16 h-16 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-3xl mb-6">👧</div>
+                <h3 class="text-xl font-bold text-primary mb-3">子供向けAI教室</h3>
+                <p class="text-body text-sm mb-4 leading-relaxed">
+                    子供たちが安心してAIに触れ、自分のアイデアを形にできる場をオンライン／対面で用意しています。
+                </p>
+                <ul class="text-xs text-gray-500 space-y-2 font-medium bg-gray-50 p-3 rounded-lg">
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>わくわくクリエイト教室</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>ゲーム感覚で学ぶ</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>親子参加も歓迎</li>
+                </ul>
+            </div>
+            <!-- Card 3: AIツールガイド -->
+            <div class="card-base p-8 scroll-animate interactive" style="transition-delay: 0.2s;">
+                <div class="w-16 h-16 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-3xl mb-6">🛠️</div>
+                <h3 class="text-xl font-bold text-primary mb-3">AIツールガイド</h3>
+                <p class="text-body text-sm mb-4 leading-relaxed">
+                    話題のAIツールを、実際の利用シーン別にわかりやすく整理したガイドをコミュニティ内で共有します。
+                </p>
+                <ul class="text-xs text-gray-500 space-y-2 font-medium bg-gray-50 p-3 rounded-lg">
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>OpenAI（ChatGPT）</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>Claude／Gemini／Grok</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>その他便利ツール</li>
+                </ul>
+            </div>
+            <!-- Card 4: プロンプト事例 -->
+            <div class="card-base p-8 scroll-animate interactive" style="transition-delay: 0.3s;">
+                <div class="w-16 h-16 bg-[#E6F0ED] rounded-2xl flex items-center justify-center text-3xl mb-6">💬</div>
+                <h3 class="text-xl font-bold text-primary mb-3">プロンプト事例集</h3>
+                <p class="text-body text-sm mb-4 leading-relaxed">
+                    基本の考え方から、仕事・学習・創作などシーン別のプロンプトテンプレート、コミュニティメンバーの実例まで。
+                </p>
+                <ul class="text-xs text-gray-500 space-y-2 font-medium bg-gray-50 p-3 rounded-lg">
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>基本の考え方</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>シーン別テンプレ</li>
+                    <li class="flex items-center"><span class="w-1.5 h-1.5 bg-[#2F6F5C] rounded-full mr-2"></span>コミュニティ事例集</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3: Events (背景: ベース色 alt) -->
+    <section id="events" class="py-20 bg-base-alt scroll-margin-top-24">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col lg:flex-row gap-12 items-start">
+                <div class="lg:w-1/2">
+                    <!-- 小ラベル: アクセントオレンジ -->
+                    <span class="text-accent font-bold tracking-wider text-sm uppercase mb-2 block brand-text">Community Events</span>
+                    <!-- 見出し: メイングリーン -->
+                    <h2 class="text-3xl font-bold mb-6 text-primary">
+                        イベント：AI好きがつながる場
+                    </h2>
+                    <div class="text-body space-y-4 leading-relaxed">
+                        <p>
+                            useAIクラブのイベントは、「学ぶ」と「つながる」を同時にかなえることを大切にしています。
+                        </p>
+                        <p>
+                            オフライン交流会では、実際に顔を合わせてAIの活用アイデアをシェアしたり、ミニワークショップで一緒に手を動かしたりします。
+                        </p>
+                    </div>
+                </div>
+                <div class="lg:w-1/2 grid sm:grid-cols-2 gap-6">
+                    <div class="card-base p-6">
+                        <!-- カード内見出し: グリーン -->
+                        <h3 class="font-bold mb-2 text-primary">オフライン交流会</h3>
+                        <p class="text-gray-500 text-sm">
+                            カフェやコワーキングスペースなどで少人数の対話を中心に、AI活用の悩みやアイデアを共有します。
+                        </p>
+                    </div>
+                    <div class="card-base p-6">
+                        <h3 class="font-bold mb-2 text-primary">オンラインAIイベント</h3>
+                        <p class="text-gray-500 text-sm">
+                            自宅から参加できる勉強会やハンズオン形式のイベントで、最新のツールや活用法を試していきます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Kids (背景: ベース色 #FFF7ED - 統一ルール適用) -->
+    <section id="kids" class="py-20 container mx-auto px-4 scroll-margin-top-24">
+        <!-- 子供向けセクションのみ特別な枠線で囲むが、背景はベース色に馴染ませる -->
+        <div class="border-2 border-[#FDE68A] bg-[#FFFBEB] rounded-3xl p-8 lg:p-12">
+            <div class="flex flex-col lg:flex-row-reverse gap-12 items-center">
+                <div class="lg:w-1/2">
+                    <!-- ラベル: アクセントオレンジ -->
+                    <span class="text-accent font-bold tracking-wider text-sm uppercase mb-2 block brand-text">For Kids</span>
+                    <!-- 見出し: メイングリーン (統一) -->
+                    <h2 class="text-3xl font-bold mb-6 text-primary">
+                        子供向けAI教室：AIわくわくクリエイト
+                    </h2>
+                    <div class="text-body space-y-4 leading-relaxed">
+                        <p>
+                            「AIわくわくクリエイト教室」では、子供たちが自分の想像力をAIと一緒に形にする体験を提供します。
+                        </p>
+                        <p>
+                            絵を描いたり、物語を作ったり、簡単なゲームを作ったりしながら、楽しみながらAIリテラシーを身につけていきます。
+                        </p>
+                    </div>
+                </div>
+                <div class="lg:w-1/2 grid sm:grid-cols-2 gap-6 w-full">
+                    <!-- 子供向けカード: 背景白、見出しオレンジ、本文グレー -->
+                    <div class="bg-surface p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold mb-2 text-accent">クリエイト系ワーク</h3>
+                        <p class="text-gray-500 text-sm">
+                            画像生成や物語づくりなど、「つくる」ことを通じてAIとの対話を自然に楽しみます。
+                        </p>
+                    </div>
+                    <div class="bg-surface p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="font-bold mb-2 text-accent">ゲームで学ぶAI</h3>
+                        <p class="text-gray-500 text-sm">
+                            ゲーム要素を取り入れたアクティビティで、小学生でも直感的にAIの仕組みを理解できます。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Tools & Prompts (背景: ベース色 alt) -->
+    <section id="tools-prompts" class="py-20 bg-base-alt scroll-margin-top-24">
+        <div class="container mx-auto px-4 grid md:grid-cols-2 gap-12">
+            <!-- Tools -->
+            <div>
+                <!-- ラベル: オレンジ -->
+                <span class="text-accent font-bold tracking-wider text-sm uppercase mb-2 block brand-text">AI Tools</span>
+                <!-- 見出し: グリーン -->
+                <h2 class="text-3xl font-bold mb-4 text-primary">AIツールガイド</h2>
+                <p class="text-body mb-6 leading-relaxed">
+                    主要ツールを用途別に比較。メンバーのリアルな使用感も共有します。
+                </p>
+                <ul class="bg-surface border border-gray-200 rounded-xl divide-y divide-gray-100">
+                    <li class="p-4 flex items-center text-body font-medium"><span class="text-xl mr-4">🤖</span> 主要チャットAI比較</li>
+                    <li class="p-4 flex items-center text-body font-medium"><span class="text-xl mr-4">🎨</span> 画像生成ツール入門</li>
+                    <li class="p-4 flex items-center text-body font-medium"><span class="text-xl mr-4">📝</span> 要約・翻訳便利ツール</li>
+                </ul>
+            </div>
+            <!-- Prompts -->
+            <div>
+                <span class="text-accent font-bold tracking-wider text-sm uppercase mb-2 block brand-text">Prompts</span>
+                <h2 class="text-3xl font-bold mb-4 text-primary">プロンプト＆事例集</h2>
+                <p class="text-body mb-6 leading-relaxed">
+                    基本の型から、シーン別のテンプレート、成功事例まで網羅。
+                </p>
+                <ul class="bg-surface border border-gray-200 rounded-xl divide-y divide-gray-100">
+                    <li class="p-4 flex items-center text-body font-medium"><span class="text-xl mr-4">💡</span> プロンプトの基本フォーマット</li>
+                    <li class="p-4 flex items-center text-body font-medium"><span class="text-xl mr-4">💼</span> ビジネス活用テンプレート</li>
+                    <li class="p-4 flex items-center text-body font-medium"><span class="text-xl mr-4">📚</span> メンバーの成功事例集</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Join (背景: ベース色 #FFF7ED) -->
+    <section id="join" class="py-20 container mx-auto px-4 text-center scroll-margin-top-24">
+        <div class="max-w-3xl mx-auto bg-surface p-10 rounded-3xl border border-gray-100 shadow-lg">
+            <!-- 見出し: グリーン -->
+            <h2 class="text-3xl font-bold mb-4 text-primary">まずはコミュニティをのぞいてみませんか？</h2>
+            <p class="text-body mb-8 leading-relaxed">
+                useAIクラブは、AIに興味がある人ならレベルや職種に関係なく参加OKです。
             </p>
-            <div class="mt-6">
-                <a href="#events"
-                   class="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white ai-gradient-bg shadow-sm hover:opacity-90 transition">
-                    最新イベントをチェック
-                </a>
-            </div>
+            <!-- CTAボタン: グリーン塗り（他のボタンとスタイル統一） -->
+            <a href="#" class="btn-primary interactive text-lg">
+                参加方法・最新スケジュールを見る
+            </a>
         </div>
     </section>
 </main>
 
 <!-- フッター -->
-<footer class="bg-gray-900">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div class="flex items-center space-x-2 mb-6 md:mb-0">
-                <div class="h-8 w-8 rounded-lg ai-gradient-bg flex items-center justify-center text-white text-xs font-bold">
-                    UA
-                </div>
-                <span class="text-lg font-semibold text-white">
-            UseAI<span class="text-gray-400">クラブ</span>
-          </span>
-            </div>
-
-            <nav class="flex flex-wrap gap-6 text-sm">
-                <a href="#about" class="text-gray-400 hover:text-white transition">クラブ紹介</a>
-                <a href="#events" class="text-gray-400 hover:text-white transition">イベント情報</a>
-                <a href="#join" class="text-gray-400 hover:text-white transition">参加方法</a>
-                <a href="#" class="text-gray-400 hover:text-white transition">プライバシーポリシー</a>
-            </nav>
-        </div>
-
-        <div class="mt-8 pt-6 border-t border-gray-800 text-xs text-gray-500 text-center md:text-left">
-            <p>&copy; 2025 UseAIクラブ. All rights reserved.</p>
-            <p class="mt-1">お問い合わせ: [連絡先メールアドレスなどをここに記載]</p>
-        </div>
-    </div>
+<footer class="text-center py-10 border-t border-gray-200 bg-base-alt relative z-10">
+    <p class="text-gray-500 text-sm font-medium">&copy; 2025 useAI Club. All Rights Reserved.</p>
 </footer>
 
-<!-- JavaScript -->
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const button = document.getElementById('mobile-menu-button');
-        const menu = document.getElementById('mobile-menu');
+    const heroTextWrapper = document.getElementById('hero-text-wrapper');
+    const customCursor = document.getElementById('custom-cursor');
 
-        button.addEventListener('click', () => {
-            const isExpanded = button.getAttribute('aria-expanded') === 'true';
-            button.setAttribute('aria-expanded', !isExpanded);
-            menu.classList.toggle('hidden');
-        });
+    let mouseX = 0;
+    let mouseY = 0;
+    let cursorX = 0;
+    let cursorY = 0;
 
-        menu.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                menu.classList.add('hidden');
-                button.setAttribute('aria-expanded', 'false');
-            });
+    const animateCursor = () => {
+        const speed = 0.2;
+        cursorX += (mouseX - cursorX) * speed;
+        cursorY += (mouseY - cursorY) * speed;
+
+        if (customCursor) {
+            customCursor.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0) translate(-50%, -50%)`;
+        }
+        requestAnimationFrame(animateCursor);
+    };
+    animateCursor();
+
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+
+        if (heroTextWrapper) {
+            const rect = heroTextWrapper.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const diffX = (mouseX - centerX) / 60;
+            const diffY = (mouseY - centerY) / 60;
+
+            heroTextWrapper.style.transform = `
+                    perspective(1000px)
+                    rotateX(${diffY}deg)
+                    rotateY(${-diffX}deg)
+                `;
+        }
+    });
+
+    // クリック時のカーソル変更ロジック
+    document.addEventListener('mousedown', (e) => {
+        customCursor.style.width = '4rem';
+        customCursor.style.height = '4rem';
+        customCursor.style.opacity = '1';
+        customCursor.style.color = '#fff';
+
+        if (e.button === 0) { // 左クリック
+            customCursor.textContent = 'A';
+            // クリック時の色は、ベースカラーパレットから逸脱しないようオレンジを使用（要件により他の色は禁止のため）
+            customCursor.style.backgroundColor = 'var(--color-accent)';
+        } else if (e.button === 2) { // 右クリック
+            customCursor.textContent = 'B';
+            // 右クリック時はメイングリーンを使用
+            customCursor.style.backgroundColor = 'var(--color-primary)';
+        }
+    });
+
+    document.addEventListener('mouseup', (e) => {
+        customCursor.textContent = '';
+        customCursor.style.color = '';
+
+        const target = document.elementFromPoint(e.clientX, e.clientY);
+        const isInteractive = target && (target.closest('.interactive') || target.tagName === 'A' || target.tagName === 'BUTTON');
+
+        if (isInteractive) {
+            customCursor.style.width = '2.5rem';
+            customCursor.style.height = '2.5rem';
+            customCursor.style.opacity = '0.3';
+            customCursor.style.backgroundColor = 'var(--color-primary)';
+        } else {
+            customCursor.style.width = '1rem';
+            customCursor.style.height = '1rem';
+            customCursor.style.opacity = '0.8';
+            customCursor.style.backgroundColor = 'var(--color-accent)';
+        }
+    });
+
+    document.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
+
+    const observer = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
         });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.scroll-animate').forEach(el => {
+        observer.observe(el);
+    });
+
+    const nav = document.getElementById('main-nav');
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) {
+            nav.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
+        } else {
+            nav.style.boxShadow = 'none';
+        }
     });
 </script>
+
 </body>
 </html>
-
