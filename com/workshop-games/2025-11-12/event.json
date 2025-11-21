@@ -1,0 +1,44 @@
+{
+  "eventName": "かたは塾 子供AI教室",
+  "eventDate": "2025-11-12",
+  "eventDescription": "AIを使ったゲーム作りを体験するワークショップを開催しました。参加者は自分で考えたオリジナルゲームをAIで生成させました。",
+  "eventURL": "",
+  "games": [
+    {
+      "id": "taro2023",
+      "creator": "たろう",
+      "age": 9,
+      "grade": "小学3年生",
+      "ai": "ChatGPT",
+      "prompt": "宇宙を冒険するゲームを作って",
+      "title": "宇宙大冒険"
+    },
+    {
+      "id": "hanako2024",
+      "creator": "はなこ",
+      "age": 10,
+      "grade": "小学4年生",
+      "ai": "Claude",
+      "prompt": "パズルのゲームを作りたい",
+      "title": "パズルゲーム"
+    },
+    {
+      "id": "taro2023",
+      "creator": "たろう",
+      "age": 9,
+      "grade": "小学3年生",
+      "ai": "ChatGPT",
+      "prompt": "宇宙を冒険するゲームを作って",
+      "title": "宇宙大冒険"
+    },
+    {
+      "id": "hanako2024",
+      "creator": "はなこ",
+      "age": 10,
+      "grade": "小学4年生",
+      "ai": "Claude",
+      "prompt": "パズルのゲームを作りたい",
+      "title": "パズルゲーム"
+    }
+  ]
+}

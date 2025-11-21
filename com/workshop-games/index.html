@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ワークショップゲーム一覧 | useAI Club</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 40px;
+        }
+        .event-section {
+            margin-bottom: 60px;
+            padding-bottom: 40px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        .event-section:last-child {
+            border-bottom: none;
+        }
+        .event-header h2 {
+            font-size: 1.8rem;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        .event-meta {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        .event-description {
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+        .event-link {
+            display: inline-block;
+            color: #3498db;
+            text-decoration: none;
+            margin-bottom: 20px;
+        }
+        .event-link:hover {
+            text-decoration: underline;
+        }
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .game-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .game-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .game-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .game-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        .game-card h3 a {
+            color: #2c3e50;
+            text-decoration: none;
+        }
+        .game-card h3 a:hover {
+            color: #3498db;
+        }
+        .game-creator {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .game-ai {
+            background: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .game-prompt {
+            font-size: 0.9rem;
+            font-style: italic;
+            color: #555;
+            padding: 10px;
+            background: white;
+            border-left: 3px solid #3498db;
+            border-radius: 4px;
+        }
+        #loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎮 ワークショップゲーム一覧</h1>
+    <p class="subtitle">子供たちがAIと一緒に作ったゲーム作品集</p>
+
+    <div id="loading">読み込み中...</div>
+    <div id="all-events"></div>
+</div>
+
+<script>
+    fetch('folders.json')
+        .then(response => response.json())
+        .then(folders => {
+            return Promise.all(
+                folders.map(folder =>
+                    fetch(`${folder}/event.json`)
+                        .then(r => r.json())
+                        .then(data => ({folder, data}))
+                )
+            );
+        })
+        .then(allEvents => {
+            document.getElementById('loading').style.display = 'none';
+
+            allEvents.forEach(({folder, data}) => {
+                let html = `
+                        <section class="event-section">
+                            <div class="event-header">
+                                <h2>${data.eventName}</h2>
+                                <p class="event-meta">📅 ${data.eventDate}</p>
+                                <p class="event-description">${data.eventDescription}</p>
+                                ${data.eventURL ? `<a href="${data.eventURL}" class="event-link" target="_blank">イベント詳細を見る →</a>` : ''}
+                            </div>
+                            <div class="games-grid">`;
+
+                data.games.forEach(g => {
+                    html += `
+                            <div class="game-card">
+                                <img src="${folder}/${g.id}.jpg" alt="${g.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23ddd%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22>No Image</text></svg>'">
+                                <h3><a href="${folder}/${g.id}.html">${g.title}</a></h3>
+                                <p class="game-creator">👤 ${g.creator} (${g.age}歳・${g.grade})</p>
+                                <span class="game-ai">${g.ai}</span>
+                                <div class="game-prompt">「${g.prompt}」</div>
+                            </div>`;
+                });
+
+                html += `</div></section>`;
+                document.getElementById('all-events').innerHTML += html;
+            });
+        })
+        .catch(error => {
+            document.getElementById('loading').innerHTML = 'エラーが発生しました: ' + error.message;
+        });
+</script>
+</body>
+</html>
