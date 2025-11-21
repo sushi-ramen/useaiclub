@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>将棋ゲーム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Noto+Sans+JP', sans-serif;
+            touch-action: manipulation;
+        }
+        .game-layout {
+            display: flex;
+            flex-direction: column-reverse; /* スマホでは盤を上に */
+            align-items: center;
+            gap: 1rem;
+            width: 100%;
+            max-width: 1200px;
+            padding: 0.5rem;
+        }
+        @media (min-width: 1024px) {
+            .game-layout {
+                display: grid;
+                grid-template-columns: 300px 1fr; /* 左パネル300px、右パネルは残り全部 */
+                align-items: stretch;
+                flex-direction: initial; /* flex設定をリセット */
+            }
+        }
+        #left-panel {
+            width: 100%;
+            max-width: 300px;
+            border: 2px solid #6b4e3d;
+            background-color: #f3d9b5;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem;
+            overflow: hidden;
+        }
+        @media (min-width: 1024px) {
+            #left-panel {
+                width: auto; /* Gridが幅を管理するのでautoに */
+                max-width: none;
+            }
+        }
+        #panel-toggles {
+            display: flex;
+            flex-shrink: 0;
+            border-bottom: 2px solid #6b4e3d;
+        }
+        .toggle-btn {
+            flex-grow: 1;
+            padding: 0.75rem 0.5rem;
+            background-color: #eaddc5;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #6b4e3d;
+            transition: background-color 0.2s;
+        }
+        .toggle-btn.active {
+            background-color: #f3d9b5;
+            border-bottom: 2px solid #f3d9b5;
+            margin-bottom: -2px;
+        }
+        #panel-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-top: 0.75rem;
+            /* ★修正点: flexアイテムがコンテンツサイズ以下に縮小できるようにする */
+            min-height: 0;
+        }
+        #kifu-view {
+            display: none; /* 初期状態は非表示 */
+            background-color: #fff; /* 背景を白に */
+            border-radius: 0.25rem; /* 4px */
+            padding: 0.5rem; /* 8px */
+            height: 100%;
+        }
+        #menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 0.5rem;
+        }
+        .menu-button {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1rem;
+            font-weight: 600;
+            color: white;
+            background-color: #3b82f6; /* blue-600 */
+            border: none;
+            border-radius: 0.375rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .menu-button:hover {
+            background-color: #2563eb; /* blue-700 */
+        }
+        .menu-button:disabled {
+            background-color: #9ca3af; /* gray-400 */
+            cursor: not-allowed;
+        }
+        #main-game-area {
+            width: 100%; /* Gridの子要素として幅100%に */
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        #board-container {
+            border: 2px solid #6b4e3d;
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            background-color: #f3d9b5;
+            width: 100%;
+            aspect-ratio: 1 / 1;
+        }
+        .square {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #b89a81;
+            cursor: pointer;
+            position: relative;
+        }
+        .piece {
+            font-size: clamp(1.5vw, 3.5vmin, 2.5rem);
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            height: 90%;
+            transition: transform 0.2s, background-color 0.2s;
+            user-select: none;
+            background-color: #f3d9b5;
+            border-radius: 4px;
+            transform-origin: center;
+        }
+        .piece.long-name { font-size: clamp(1.2vw, 2.8vmin, 2.0rem); }
+        .gote .piece, .gote .captured-piece { transform: rotate(180deg); }
+        .square.selected .piece { background-color: #fde047; transform: scale(1.1); }
+        .gote.square.selected .piece { background-color: #fde047; transform: rotate(180deg) scale(1.1); }
+        .square.valid-move::after {
+            content: ''; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); width: 30%; height: 30%;
+            background-color: rgba(34, 197, 94, 0.5); border-radius: 50%;
+            pointer-events: none;
+        }
+        .captured-area {
+            min-height: 60px;
+            background-color: #eaddc5;
+            padding: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        #captured-gote {
+            border-bottom: 1px solid #b89a81;
+        }
+        #captured-sente {
+            border-top: 1px solid #b89a81;
+        }
+        .captured-piece {
+            font-size: clamp(1.2vw, 3vmin, 2rem); font-weight: bold; cursor: pointer;
+            padding: 2px 4px; margin: 2px; background-color: #f3d9b5;
+            border: 1px solid #b89a81; border-radius: 4px; display: inline-flex; align-items: center;
+        }
+        .captured-piece.selected { background-color: #fde047; }
+        .promotion-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background-color: white; border: 2px solid #333; border-radius: 10px;
+            padding: 20px; z-index: 100; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .turn-indicator {
+            font-size: 1.25rem; /* text-xl */
+            color: #ef4444; /* red-500 */
+            margin-right: 0.5rem; /* mr-2 */
+            transition: opacity 0.2s ease-in-out;
+            opacity: 0; /* Hidden by default */
+            line-height: 1; /* Prevent extra vertical space */
+        }
+        .turn-indicator.active {
+            opacity: 1;
+        }
+        .gote .turn-indicator {
+            transform: rotate(180deg);
+        }
+        .timer {
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #374151; /* gray-700 */
+            margin-left: auto; /* 右寄せ */
+            padding: 0 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+<div class="game-layout">
+    <!-- 左パネル -->
+    <div id="left-panel">
+        <div id="panel-toggles">
+            <button id="show-menu-btn" class="toggle-btn active">メニュー</button>
+            <button id="show-kifu-btn" class="toggle-btn">棋譜</button>
+        </div>
+        <div id="panel-content">
+            <div id="menu-view">
+                <div id="menu-buttons">
+                    <!-- ボタンはJSでここに追加される -->
+                </div>
+            </div>
+            <div id="kifu-view">
+                <ol id="kifu-log" class="text-sm space-y-1"></ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- メインゲームエリア -->
+    <div id="main-game-area">
+        <div id="board-container" class="shadow-lg">
+            <div id="captured-gote" class="captured-area gote justify-start">
+                    <span class="text-gray-600 mr-2 flex items-center font-bold">
+                        <span id="gote-turn-indicator" class="turn-indicator">▲</span>
+                        後手 持ち駒:
+                    </span>
+                <span id="gote-timer" class="timer">00:00</span>
+            </div>
+            <div id="board"></div>
+            <div id="captured-sente" class="captured-area sente justify-start">
+                    <span class="text-gray-600 mr-2 flex items-center font-bold">
+                        <span id="sente-turn-indicator" class="turn-indicator">▲</span>
+                        先手 持ち駒:
+                    </span>
+                <span id="sente-timer" class="timer">00:00</span>
+            </div>
+        </div>
+        <div id="game-indicators" class="text-center">
+            <p id="check-indicator" class="text-lg text-red-600 font-bold py-1"></p>
+        </div>
+    </div>
+</div>
+
+<!-- 成り選択モーダル -->
+<div id="promotion-modal" class="promotion-modal hidden">
+    <p class="text-lg font-bold mb-4">成りますか？</p>
+    <div class="flex justify-around">
+        <button id="promote-yes" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">はい</button>
+        <button id="promote-no" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">いいえ</button>
+    </div>
+</div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // --- 定数・変数定義 ---
+        const SENTE = 'sente';
+        const GOTE = 'gote';
+        const PIECE_DEFINITIONS = {
+            'P': { name: '歩', short: 'P', moves: [[0, -1]], promotable: true, promoted: '+P' }, 'L': { name: '香', short: 'L', moves: [[0, -Infinity]], promotable: true, promoted: '+L' }, 'N': { name: '桂', short: 'N', moves: [[-1, -2], [1, -2]], promotable: true, promoted: '+N' }, 'S': { name: '銀', short: 'S', moves: [[0, -1], [-1, -1], [1, -1], [-1, 1], [1, 1]], promotable: true, promoted: '+S' }, 'G': { name: '金', short: 'G', moves: [[0, -1], [-1, -1], [1, -1], [-1, 0], [1, 0], [0, 1]], promotable: false }, 'B': { name: '角', short: 'B', moves: [[-Infinity, -Infinity], [Infinity, -Infinity], [-Infinity, Infinity], [Infinity, Infinity]], promotable: true, promoted: '+B' }, 'R': { name: '飛', short: 'R', moves: [[0, -Infinity], [0, Infinity], [-Infinity, 0], [Infinity, 0]], promotable: true, promoted: '+R' }, 'K': { name: '王', short: 'K', moves: [[0, -1], [1, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1]], promotable: false },
+            '+P': { name: 'と', short: '+P', moves: [[0, -1], [-1, -1], [1, -1], [-1, 0], [1, 0], [0, 1]], promotable: false }, '+L': { name: '成香', short: '+L', moves: [[0, -1], [-1, -1], [1, -1], [-1, 0], [1, 0], [0, 1]], promotable: false }, '+N': { name: '成桂', short: '+N', moves: [[0, -1], [-1, -1], [1, -1], [-1, 0], [1, 0], [0, 1]], promotable: false }, '+S': { name: '成銀', short: '+S', moves: [[0, -1], [-1, -1], [1, -1], [-1, 0], [1, 0], [0, 1]], promotable: false }, '+B': { name: '馬', short: '+B', moves: [[-Infinity, -Infinity], [Infinity, -Infinity], [-Infinity, Infinity], [Infinity, Infinity], [0, -1], [0, 1], [-1, 0], [1, 0]], promotable: false }, '+R': { name: '龍', short: '+R', moves: [[0, -Infinity], [0, Infinity], [-Infinity, 0], [Infinity, 0], [-1, -1], [1, -1], [-1, 1], [1, 1]], promotable: false },
+        };
+        const initialBoardSetup = [
+            ['L','N','S','G','K','G','S','N','L'],[null,'R',null,null,null,null,null,'B',null],['P','P','P','P','P','P','P','P','P'],
+            [null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null],[null,null,null,null,null,null,null,null,null],
+            ['p','p','p','p','p','p','p','p','p'],[null,'b',null,null,null,null,null,'r',null],['l','n','s','g','k','g','s','n','l']
+        ];
+        let boardState, currentPlayer, capturedPieces, selectedPiece, promotionResolver, gameOver, kifuLog;
+        let turnStartTime, timerIntervalId = null;
+        let gameHistory = [];
+        let historyIndex = -1;
+        let isInteractive = true;
+
+        // --- DOM要素の取得 ---
+        const dom = {
+            board: document.getElementById('board'), capturedSente: document.getElementById('captured-sente'), capturedGote: document.getElementById('captured-gote'),
+            checkIndicator: document.getElementById('check-indicator'), gameIndicators: document.getElementById('game-indicators'), promotionModal: document.getElementById('promotion-modal'),
+            promoteYesButton: document.getElementById('promote-yes'), promoteNoButton: document.getElementById('promote-no'), showMenuBtn: document.getElementById('show-menu-btn'),
+            showKifuBtn: document.getElementById('show-kifu-btn'), menuView: document.getElementById('menu-view'), kifuView: document.getElementById('kifu-view'),
+            kifuLog: document.getElementById('kifu-log'), menuButtonsContainer: document.getElementById('menu-buttons'), senteTurnIndicator: document.getElementById('sente-turn-indicator'),
+            goteTurnIndicator: document.getElementById('gote-turn-indicator'), senteTimer: document.getElementById('sente-timer'), goteTimer: document.getElementById('gote-timer'),
+            undoButton: null, redoButton: null,
+        };
+
+        // --- UI / メニュー ---
+        function setupUI() {
+            const createMenuButton = (id, text, onClick) => {
+                const button = document.createElement('button');
+                button.id = id;
+                button.className = 'menu-button';
+                button.textContent = text;
+                button.addEventListener('click', onClick);
+                dom.menuButtonsContainer.appendChild(button);
+                return button;
+            };
+            createMenuButton('reset-button', '新しい対局', initGame);
+            dom.undoButton = createMenuButton('undo-button', '待った', undoMove);
+            dom.redoButton = createMenuButton('redo-button', '進む', redoMove);
+            dom.showMenuBtn.addEventListener('click', () => switchPanel('menu'));
+            dom.showKifuBtn.addEventListener('click', () => switchPanel('kifu'));
+        }
+
+        function switchPanel(panelName) {
+            dom.menuView.style.display = panelName === 'menu' ? 'block' : 'none';
+            dom.kifuView.style.display = panelName === 'kifu' ? 'block' : 'none';
+            dom.showMenuBtn.classList.toggle('active', panelName === 'menu');
+            dom.showKifuBtn.classList.toggle('active', panelName === 'kifu');
+        }
+
+        // --- ゲーム進行 ---
+        function initGame() {
+            boardState = Array(9).fill(null).map(() => Array(9).fill(null));
+            for (let y = 0; y < 9; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const pieceChar = initialBoardSetup[y][x];
+                    if (pieceChar) boardState[y][x] = { type: pieceChar.toUpperCase(), player: pieceChar.toUpperCase() === pieceChar ? GOTE : SENTE };
+                }
+            }
+            currentPlayer = SENTE;
+            capturedPieces = { [SENTE]: [], [GOTE]: [] };
+            selectedPiece = null;
+            gameOver = false;
+            isInteractive = true;
+            kifuLog = [];
+            gameHistory = [];
+            historyIndex = -1;
+            saveHistory();
+            renderAll();
+            updateTurnIndicator();
+            updateCheckIndicator('');
+            if (timerIntervalId) clearInterval(timerIntervalId);
+            dom.senteTimer.textContent = '00:00';
+            dom.goteTimer.textContent = '00:00';
+            turnStartTime = Date.now();
+            startTimer();
+        }
+
+        function switchTurn() {
+            clearSelections();
+            currentPlayer = (currentPlayer === SENTE) ? GOTE : SENTE;
+            saveHistory(); // ★修正点: 履歴保存のタイミングをここに移動
+            renderAll();
+            updateTurnIndicator();
+            if (timerIntervalId) clearInterval(timerIntervalId);
+            turnStartTime = Date.now();
+            startTimer();
+            const kingPosition = findKing(currentPlayer);
+            if (kingPosition && isInCheck(kingPosition.x, kingPosition.y, currentPlayer)) {
+                updateCheckIndicator("王手！");
+                if (isCheckmate(currentPlayer)) endGame(getOpponent(currentPlayer));
+            } else {
+                updateCheckIndicator('');
+                if (isStalemate(currentPlayer)) endGame(getOpponent(currentPlayer));
+            }
+            isInteractive = true;
+        }
+
+        function endGame(winner) {
+            gameOver = true;
+            const winnerText = `${winner === SENTE ? '先手' : '後手'}の勝ち！`;
+            updateCheckIndicator(winnerText);
+            kifuLog.push(winnerText);
+            renderKifu();
+            clearSelections();
+            updateTurnIndicator();
+            if (timerIntervalId) clearInterval(timerIntervalId);
+        }
+
+        // --- 描画処理 ---
+        function renderAll() {
+            renderBoard();
+            renderCapturedPieces();
+            renderKifu();
+        }
+
+        function renderBoard() {
+            dom.board.innerHTML = '';
+            for (let y = 0; y < 9; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const square = document.createElement('div');
+                    square.className = 'square';
+                    square.dataset.x = x;
+                    square.dataset.y = y;
+                    const pieceData = boardState[y][x];
+                    if (pieceData) {
+                        const pieceElement = document.createElement('div');
+                        pieceElement.className = 'piece';
+                        const pieceName = PIECE_DEFINITIONS[pieceData.type].name;
+                        if (pieceName.length > 1) pieceElement.classList.add('long-name');
+                        pieceElement.textContent = pieceName;
+                        square.classList.add(pieceData.player);
+                        square.appendChild(pieceElement);
+                    }
+                    dom.board.appendChild(square);
+                }
+            }
+            addBoardEventListeners();
+        }
+
+        function renderCapturedPieces() {
+            renderPlayerCapturedPieces(SENTE, dom.capturedSente);
+            renderPlayerCapturedPieces(GOTE, dom.capturedGote);
+        }
+
+        function renderPlayerCapturedPieces(player, element) {
+            element.querySelectorAll('.captured-piece').forEach(el => el.remove());
+            const pieceCounts = {};
+            capturedPieces[player].forEach(p => pieceCounts[p] = (pieceCounts[p] || 0) + 1);
+            Object.entries(pieceCounts).forEach(([type, count]) => {
+                const pieceElement = document.createElement('div');
+                pieceElement.className = 'captured-piece';
+                pieceElement.dataset.type = type;
+                pieceElement.dataset.player = player;
+                const pieceName = PIECE_DEFINITIONS[type].name;
+                pieceElement.textContent = count > 1 ? `${pieceName}${count}` : pieceName;
+                element.appendChild(pieceElement);
+            });
+            addCapturedPieceEventListeners();
+        }
+
+        function renderKifu() {
+            dom.kifuLog.innerHTML = '';
+            kifuLog.forEach((log, index) => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="font-mono inline-block w-8 text-right pr-2 text-gray-500">${index + 1}.</span>${log}`;
+                dom.kifuLog.appendChild(li);
+            });
+            dom.kifuLog.parentElement.scrollTop = dom.kifuLog.parentElement.scrollHeight;
+        }
+
+        function updateTurnIndicator() {
+            if (gameOver) {
+                dom.senteTurnIndicator.classList.remove('active');
+                dom.goteTurnIndicator.classList.remove('active');
+                return;
+            }
+            dom.senteTurnIndicator.classList.toggle('active', currentPlayer === SENTE);
+            dom.goteTurnIndicator.classList.toggle('active', currentPlayer === GOTE);
+        }
+
+        function updateCheckIndicator(message) {
+            dom.checkIndicator.textContent = message;
+            dom.gameIndicators.classList.toggle('hidden', !message);
+        }
+
+        function highlightValidMoves(moves) {
+            document.querySelectorAll('.valid-move').forEach(el => el.classList.remove('valid-move'));
+            moves.forEach(({ x, y }) => {
+                const square = dom.board.querySelector(`[data-x='${x}'][data-y='${y}']`);
+                if (square) square.classList.add('valid-move');
+            });
+        }
+
+        function clearSelections() {
+            selectedPiece = null;
+            document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+            document.querySelectorAll('.valid-move').forEach(el => el.classList.remove('valid-move'));
+        }
+
+        function startTimer() {
+            timerIntervalId = setInterval(updateTimerDisplay, 1000);
+        }
+
+        function updateTimerDisplay() {
+            if (gameOver) return;
+            const elapsedTime = Math.floor((Date.now() - turnStartTime) / 1000);
+            const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+            const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+            const timerString = `${minutes}:${seconds}`;
+            const timerElement = currentPlayer === SENTE ? dom.senteTimer : dom.goteTimer;
+            const otherTimerElement = currentPlayer === SENTE ? dom.goteTimer : dom.senteTimer;
+            timerElement.textContent = timerString;
+            otherTimerElement.textContent = '00:00';
+        }
+
+        // --- イベント処理 ---
+        function addBoardEventListeners() {
+            document.querySelectorAll('.square').forEach(square => square.addEventListener('click', () => handleSquareClick(square)));
+        }
+
+        function addCapturedPieceEventListeners() {
+            document.querySelectorAll('.captured-piece').forEach(piece => piece.addEventListener('click', () => handleCapturedPieceClick(piece)));
+        }
+
+        dom.promoteYesButton.addEventListener('click', () => promotionResolver(true));
+        dom.promoteNoButton.addEventListener('click', () => promotionResolver(false));
+
+        function handleSquareClick(squareElement) {
+            if (gameOver || !isInteractive) return;
+            const x = parseInt(squareElement.dataset.x);
+            const y = parseInt(squareElement.dataset.y);
+            const pieceData = boardState[y][x];
+
+            if (selectedPiece) {
+                const validMoves = getValidMoves(selectedPiece.type, selectedPiece.x, selectedPiece.y, selectedPiece.from);
+                if (validMoves.some(move => move.x === x && move.y === y)) {
+                    movePiece(selectedPiece.x, selectedPiece.y, x, y);
+                } else {
+                    clearSelections();
+                    if (pieceData && pieceData.player === currentPlayer) selectBoardPiece(x, y, pieceData);
+                }
+            } else if (pieceData && pieceData.player === currentPlayer) {
+                selectBoardPiece(x, y, pieceData);
+            }
+        }
+
+        function handleCapturedPieceClick(pieceElement) {
+            if (gameOver || !isInteractive || pieceElement.dataset.player !== currentPlayer) return;
+            clearSelections();
+            pieceElement.classList.add('selected');
+            selectedPiece = { type: pieceElement.dataset.type, from: 'captured' };
+            highlightValidMoves(getValidDropLocations(selectedPiece.type));
+        }
+
+        function selectBoardPiece(x, y, pieceData) {
+            clearSelections();
+            dom.board.querySelector(`[data-x='${x}'][data-y='${y}']`).classList.add('selected');
+            selectedPiece = { type: pieceData.type, x, y, from: 'board' };
+            highlightValidMoves(getValidMoves(pieceData.type, x, y, 'board'));
+        }
+
+        // --- ゲームロジック ---
+        async function movePiece(fromX, fromY, toX, toY) {
+            isInteractive = false; // 操作をロック
+            const isDrop = selectedPiece.from === 'captured';
+            const pieceToMoveType = isDrop ? selectedPiece.type : boardState[fromY][fromX].type;
+            let promoted = false;
+
+            if (isDrop) {
+                boardState[toY][toX] = { type: pieceToMoveType, player: currentPlayer };
+                capturedPieces[currentPlayer].splice(capturedPieces[currentPlayer].indexOf(pieceToMoveType), 1);
+            } else {
+                const pieceToMove = { ...boardState[fromY][fromX] };
+                const captured = boardState[toY][toX];
+                if (captured) {
+                    let capturedType = captured.type.startsWith('+') ? captured.type.substring(1) : captured.type;
+                    capturedPieces[currentPlayer].push(capturedType);
+                    capturedPieces[currentPlayer].sort();
+                }
+
+                boardState[toY][toX] = pieceToMove;
+                boardState[fromY][fromX] = null;
+
+                const canPromote = PIECE_DEFINITIONS[pieceToMove.type].promotable;
+                const inPromotionZone = isPromotionZone(fromY, currentPlayer) || isPromotionZone(toY, currentPlayer);
+                if (canPromote && inPromotionZone) {
+                    let mustPromote = (pieceToMove.type.match(/[PL]/) && (currentPlayer === SENTE ? toY === 0 : toY === 8)) || (pieceToMove.type === 'N' && (currentPlayer === SENTE ? toY <= 1 : toY >= 7));
+                    if (mustPromote) {
+                        promoted = true;
+                    } else if (await askForPromotion()) {
+                        promoted = true;
+                    }
+
+                    if (promoted) {
+                        boardState[toY][toX].type = PIECE_DEFINITIONS[pieceToMove.type].promoted;
+                    }
+                }
+            }
+
+            logKifu(toX, toY, pieceToMoveType, isDrop, promoted);
+            switchTurn();
+        }
+
+        function logKifu(toX, toY, pieceType, isDrop, didPromote) {
+            const playerMark = currentPlayer === SENTE ? '▲' : '△';
+            const pieceName = PIECE_DEFINITIONS[pieceType].name;
+            const toCoord = toShogiCoord(toX, toY);
+            let kifuStr = `${playerMark}${toCoord}${pieceName}${isDrop ? '打' : ''}${didPromote ? '成' : ''}`;
+            kifuLog.push(kifuStr);
+        }
+
+        // --- ルール計算 ---
+        function getValidMoves(type, fromX, fromY, from) {
+            if (from === 'captured') return getValidDropLocations(type);
+            const moves = [];
+            const pieceDef = PIECE_DEFINITIONS[type];
+            const player = boardState[fromY][fromX].player;
+            const direction = (player === SENTE) ? 1 : -1;
+
+            for (const move of pieceDef.moves) {
+                const [dx, dy] = move;
+                if (Math.abs(dx) === Infinity || Math.abs(dy) === Infinity) {
+                    const stepX = Math.sign(dx), stepY = Math.sign(dy) * direction;
+                    let currentX = fromX + stepX, currentY = fromY + stepY;
+                    while (currentX >= 0 && currentX < 9 && currentY >= 0 && currentY < 9) {
+                        const targetPiece = boardState[currentY][currentX];
+                        if (targetPiece) {
+                            if (targetPiece.player !== player) moves.push({ x: currentX, y: currentY });
+                            break;
+                        }
+                        moves.push({ x: currentX, y: currentY });
+                        currentX += stepX; currentY += stepY;
+                    }
+                } else {
+                    const toX = fromX + dx, toY = fromY + (dy * direction);
+                    if (toX >= 0 && toX < 9 && toY >= 0 && toY < 9) {
+                        const targetPiece = boardState[toY][toX];
+                        if (!targetPiece || targetPiece.player !== player) moves.push({ x: toX, y: toY });
+                    }
+                }
+            }
+            return moves.filter(move => !moveLeavesKingInCheck(fromX, fromY, move.x, move.y, player));
+        }
+
+        function getValidDropLocations(type) {
+            const locations = [];
+            for (let y = 0; y < 9; y++) {
+                for (let x = 0; x < 9; x++) {
+                    if (boardState[y][x] === null) {
+                        if (type === 'P') {
+                            if (Array.from({length: 9}, (_, i) => boardState[i][x]).some(p => p && p.type === 'P' && p.player === currentPlayer)) continue;
+                        }
+                        if ((type.match(/[PL]/) && (currentPlayer === SENTE ? y === 0 : y === 8)) || (type === 'N' && (currentPlayer === SENTE ? y <= 1 : y >= 7))) continue;
+
+                        boardState[y][x] = { type, player: currentPlayer };
+                        const kingPos = findKing(currentPlayer);
+                        if (kingPos && !isInCheck(kingPos.x, kingPos.y, currentPlayer)) locations.push({ x, y });
+                        boardState[y][x] = null;
+                    }
+                }
+            }
+            return locations;
+        }
+
+        function moveLeavesKingInCheck(fromX, fromY, toX, toY, player) {
+            const originalPieceAtTo = boardState[toY][toX];
+            const movingPiece = boardState[fromY][fromX];
+            boardState[toY][toX] = movingPiece; boardState[fromY][fromX] = null;
+            const kingPos = findKing(player);
+            let leavesInCheck = kingPos ? isInCheck(kingPos.x, kingPos.y, player) : true;
+            boardState[fromY][fromX] = movingPiece; boardState[toY][toX] = originalPieceAtTo;
+            return leavesInCheck;
+        }
+
+        function isInCheck(kingX, kingY, player) {
+            const opponent = getOpponent(player);
+            const opponentDirection = (opponent === SENTE) ? 1 : -1;
+            for (let y = 0; y < 9; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const piece = boardState[y][x];
+                    if (piece && piece.player === opponent) {
+                        const pieceDef = PIECE_DEFINITIONS[piece.type];
+                        for (const move of pieceDef.moves) {
+                            const [dx, dy] = move;
+                            if (Math.abs(dx) === Infinity || Math.abs(dy) === Infinity) {
+                                const stepX = Math.sign(dx), stepY = Math.sign(dy) * opponentDirection;
+                                let currentX = x + stepX, currentY = y + stepY;
+                                while (currentX >= 0 && currentX < 9 && currentY >= 0 && currentY < 9) {
+                                    if (currentX === kingX && currentY === kingY) return true;
+                                    if (boardState[currentY][currentX] && !(currentX === x && currentY === y)) break;
+                                    currentX += stepX; currentY += stepY;
+                                }
+                            } else {
+                                if (x + dx === kingX && y + (dy * opponentDirection) === kingY) return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        function isStalemate(player) {
+            for (let y = 0; y < 9; y++) {
+                for (let x = 0; x < 9; x++) {
+                    const piece = boardState[y][x];
+                    if (piece && piece.player === player && getValidMoves(piece.type, x, y, 'board').length > 0) return false;
+                }
+            }
+            for (const type of capturedPieces[player]) {
+                if (getValidDropLocations(type).length > 0) return false;
+            }
+            return true;
+        }
+
+        function isCheckmate(player) {
+            const kingPos = findKing(player);
+            return kingPos && isInCheck(kingPos.x, kingPos.y, player) && isStalemate(player);
+        }
+
+        // --- ユーティリティ ---
+        function findKing(player) {
+            for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) if (boardState[y][x]?.type === 'K' && boardState[y][x]?.player === player) return { x, y };
+            return null;
+        }
+        function getOpponent(player) { return player === SENTE ? GOTE : SENTE; }
+        function isPromotionZone(y, player) { return player === SENTE ? y <= 2 : y >= 6; }
+        function toShogiCoord(x, y) { return `${9 - x}${'一二三四五六七八九'[y]}`; }
+        function askForPromotion() {
+            return new Promise(resolve => {
+                promotionResolver = resolve;
+                dom.promotionModal.classList.remove('hidden');
+            }).then(result => {
+                dom.promotionModal.classList.add('hidden');
+                promotionResolver = null;
+                return result;
+            });
+        }
+
+        // --- 履歴管理 ---
+        function saveHistory() {
+            const state = {
+                boardState: JSON.parse(JSON.stringify(boardState)),
+                capturedPieces: JSON.parse(JSON.stringify(capturedPieces)),
+                currentPlayer: currentPlayer,
+                kifuLog: [...kifuLog],
+            };
+            gameHistory = gameHistory.slice(0, historyIndex + 1);
+            gameHistory.push(state);
+            historyIndex = gameHistory.length - 1;
+            updateUndoRedoButtons();
+        }
+
+        function loadStateFromHistory(index) {
+            if (index < 0 || index >= gameHistory.length) return;
+            isInteractive = false;
+            const state = gameHistory[index];
+            boardState = JSON.parse(JSON.stringify(state.boardState));
+            capturedPieces = JSON.parse(JSON.stringify(state.capturedPieces));
+            currentPlayer = state.currentPlayer;
+            kifuLog = [...state.kifuLog];
+            gameOver = false;
+            historyIndex = index;
+
+            clearSelections();
+            renderAll();
+            updateTurnIndicator();
+            updateCheckIndicator('');
+
+            if (timerIntervalId) clearInterval(timerIntervalId);
+            turnStartTime = Date.now();
+            startTimer();
+            updateUndoRedoButtons();
+            setTimeout(() => { isInteractive = true; }, 0);
+        }
+
+        function undoMove() {
+            if (historyIndex > 0) {
+                loadStateFromHistory(historyIndex - 1);
+            }
+        }
+
+        function redoMove() {
+            if (historyIndex < gameHistory.length - 1) {
+                loadStateFromHistory(historyIndex + 1);
+            }
+        }
+
+        function updateUndoRedoButtons() {
+            dom.undoButton.disabled = historyIndex <= 0;
+            dom.redoButton.disabled = historyIndex >= gameHistory.length - 1;
+        }
+
+        // --- 初期化処理の実行 ---
+        setupUI();
+        initGame();
+    });
+</script>
+
+</body>
+</html>

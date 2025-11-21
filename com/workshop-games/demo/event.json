@@ -1,0 +1,17 @@
+{
+  "eventName": "しんちゃん先生デモ",
+  "eventDate": "demo",
+  "eventDescription": "",
+  "eventURL": "",
+  "games": [
+    {
+      "id": "k",
+      "creator": "kun",
+      "age": "",
+      "grade": "",
+      "ai": "Gemini 2.5 Pro",
+      "prompt": "2025年8月作成",
+      "title": "将棋"
+    }
+  ]
+}

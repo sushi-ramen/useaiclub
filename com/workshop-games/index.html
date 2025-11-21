@@ -75,6 +75,9 @@
             border-radius: 8px;
             padding: 20px;
             transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
         .game-card:hover {
             transform: translateY(-5px);
@@ -90,12 +93,9 @@
         .game-card h3 {
             font-size: 1.3rem;
             margin-bottom: 10px;
-        }
-        .game-card h3 a {
             color: #2c3e50;
-            text-decoration: none;
         }
-        .game-card h3 a:hover {
+        .game-card:hover h3 {
             color: #3498db;
         }
         .game-creator {
@@ -164,15 +164,40 @@
                             <div class="games-grid">`;
 
                 data.games.forEach(g => {
+                    // 年齢表示の組み立て
+                    let ageText = '';
+                    if (g.age) {
+                        ageText = `${g.age}歳`;
+                    }
+
+                    // 学年表示の組み立て
+                    let gradeText = '';
+                    if (g.grade) {
+                        gradeText = (ageText ? '・' : '') + g.grade;
+                    }
+
+                    // 作成者情報の組み立て
+                    let creatorInfo = `👤 ${g.creator}`;
+                    if (ageText || gradeText) {
+                        creatorInfo += ` (${ageText}${gradeText})`;
+                    }
+
+                    // プロンプト表示の組み立て
+                    let promptHtml = '';
+                    if (g.prompt) {
+                        promptHtml = `<div class="game-prompt">「${g.prompt}」</div>`;
+                    }
+
                     html += `
-                            <div class="game-card">
-                                <img src="${folder}/${g.id}.jpg" alt="${g.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23ddd%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22>No Image</text></svg>'">
-                                <h3><a href="${folder}/${g.id}.html">${g.title}</a></h3>
-                                <p class="game-creator">👤 ${g.creator} (${g.age}歳・${g.grade})</p>
-                                <span class="game-ai">${g.ai}</span>
-                                <div class="game-prompt">「${g.prompt}」</div>
-                            </div>`;
+            <a href="${folder}/${g.id}.html" class="game-card">
+                <span class="game-ai">${g.ai}</span>
+                <img src="${folder}/${g.id}.png" alt="${g.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23ddd%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22>No Image</text></svg>'">
+                <h3>${g.title}</h3>
+                <p class="game-creator">${creatorInfo}</p>
+                ${promptHtml}
+            </a>`;
                 });
+
 
                 html += `</div></section>`;
                 document.getElementById('all-events').innerHTML += html;
