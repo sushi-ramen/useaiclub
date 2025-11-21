@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ワークショップゲーム一覧 | useAI Club</title>
+    <title>子供AI教室 | useAI Club</title>
     <style>
         * {
             margin: 0;
@@ -130,8 +130,8 @@
 </head>
 <body>
 <div class="container">
-    <h1>🎮 ワークショップゲーム一覧</h1>
-    <p class="subtitle">子供たちがAIと一緒に作ったゲーム作品集</p>
+    <h1>useAIクラブ ゲームワークショップ作品集</h1>
+    <p class="subtitle">子供たち考えたゲームをAIで生成</p>
 
     <div id="loading">読み込み中...</div>
     <div id="all-events"></div>
@@ -179,7 +179,7 @@
                     // 作成者情報の組み立て
                     let creatorInfo = `👤 ${g.creator}`;
                     if (ageText || gradeText) {
-                        creatorInfo += ` (${ageText}${gradeText})`;
+                        creatorInfo += ` （${ageText}${gradeText}）`;
                     }
 
                     // プロンプト表示の組み立て
