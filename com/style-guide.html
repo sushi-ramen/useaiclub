@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>useAIクラブ CSSスタイルガイド（純粋CSS版）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 見出し用フォント（Inter） -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- 共通スタイルシートのみ読み込む（Tailwindは読み込まない） -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- コンテンツ全体のラッパ（レイアウト用はインライン style で最低限に） -->
+<div style="max-width: 960px; margin: 0 auto; padding: 40px 16px 80px;">
+
+    <!-- セクション: Typography -->
+    <section id="typography" style="margin-bottom: 48px;">
+        <h2 class="section-heading text-primary" style="margin-bottom: 8px;">
+            Typography
+        </h2>
+        <p class="text-muted" style="margin-bottom: 24px;">
+            見出しタグ(H1〜H3)と、役割ごとのクラス(.page-heading, .section-heading など)の見た目を確認するためのセクションです。
+        </p>
+        <hr style="border:none;border-top:1px solid #E5E7EB;margin-bottom:24px;">
+
+        <!-- H1 デフォルト -->
+        <div style="margin-bottom: 32px;">
+      <span class="badge" style="background:#E5E7EB;color:#4B5563;margin-bottom:8px;display:inline-block;">
+        H1 (タグそのもの)
+      </span>
+            <h1>AIを「使える」に変えるコミュニティ</h1>
+            <p class="text-muted">
+                Tailwindのクラスを付けていないH1タグに、style.cssの h1 定義が正しく当たっているかを確認します。
+            </p>
+        </div>
+
+        <!-- H2 デフォルト -->
+        <div style="margin-bottom: 32px;">
+      <span class="badge" style="background:#E5E7EB;color:#4B5563;margin-bottom:8px;display:inline-block;">
+        H2 (タグそのもの)
+      </span>
+            <h2>useAIクラブとは？</h2>
+            <p class="text-muted">
+                セクション見出しとして想定しているH2タグのデフォルトスタイルです。
+            </p>
+        </div>
+
+        <!-- H3 デフォルト -->
+        <div style="margin-bottom: 32px;">
+      <span class="badge" style="background:#E5E7EB;color:#4B5563;margin-bottom:8px;display:inline-block;">
+        H3 (タグそのもの)
+      </span>
+            <h3>オフライン交流会の詳細</h3>
+            <p class="text-muted">
+                カード内のタイトルや小見出しとして想定しているH3タグのデフォルトスタイルです。
+            </p>
+        </div>
+
+        <!-- クラス指定の見出し -->
+        <div style="margin-top: 40px; padding: 24px; border-radius: 16px; background-color: #FFF3E8;">
+      <span class="badge" style="background:#E5E7EB;color:#4B5563;margin-bottom:8px;display:inline-block;">
+        .page-heading / .section-heading
+      </span>
+            <h1 class="page-heading text-primary" style="margin-bottom:16px;">
+                ページタイトル（.page-heading）
+            </h1>
+            <h2 class="section-heading text-primary" style="margin-bottom:8px;">
+                セクションタイトル（.section-heading）
+            </h2>
+            <p class="text-body">
+                Hタグのデフォルトと、役割ベースのクラス指定（.page-heading, .section-heading）の違いを確認します。
+            </p>
+        </div>
+    </section>
+
+    <!-- セクション: Buttons -->
+    <section id="buttons" style="margin-bottom: 48px;">
+        <h2 class="section-heading text-primary" style="margin-bottom: 8px;">
+            Buttons
+        </h2>
+        <p class="text-muted" style="margin-bottom: 24px;">
+            .button-primary / .button-secondary の見た目とホバー挙動を確認します。
+        </p>
+        <hr style="border:none;border-top:1px solid #E5E7EB;margin-bottom:24px;">
+
+        <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:center;">
+            <a href="#" class="button-primary">参加申し込み</a>
+            <a href="#" class="button-secondary">詳しく見る</a>
+        </div>
+    </section>
+
+    <!-- セクション: Cards & Badges -->
+    <section id="cards" style="margin-bottom: 48px;">
+        <h2 class="section-heading text-primary" style="margin-bottom: 8px;">
+            Cards & Badges
+        </h2>
+        <p class="text-muted" style="margin-bottom: 24px;">
+            .card / .card-base / .badge / .badge-accent の見た目を確認します。
+        </p>
+        <hr style="border:none;border-top:1px solid #E5E7EB;margin-bottom:24px;">
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;">
+            <div class="card" style="padding:16px;">
+                <span class="badge-accent" style="margin-bottom:8px;display:inline-block;">NEW</span>
+                <h3>カードタイトル</h3>
+                <p class="text-body">
+                    .card クラスの基本的な見た目です。角丸、影、枠線などが統一されています。
+                </p>
+            </div>
+
+            <div class="card-base" style="padding:16px;">
+                <span class="badge" style="background:#E5E7EB;color:#4B5563;margin-bottom:8px;display:inline-block;">Base</span>
+                <h3>カードタイトル（card-base）</h3>
+                <p class="text-body">
+                    旧クラス名 .card-base の互換スタイルです。将来的には .card に統一していく想定です。
+                </p>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+</body>
+</html>

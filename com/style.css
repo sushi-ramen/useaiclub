@@ -1,0 +1,729 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   useAIクラブ 共通スタイルシート
+   ==========================================================================
+
+   このファイルは、サイト全体で共通して使用するデザインルールを定義します。
+
+   Tailwind CSS（レイアウトや細かな余白調整などのユーティリティ）と
+   「役割が分かりやすいクラス名のCSS」を組み合わせる前提です。
+
+   --------------------------------------------------------------------------
+   ■ 命名規則ガイドライン
+   --------------------------------------------------------------------------
+
+   1. クラス名は「役割」が分かるように書き、意味の分かりにくい略語は避けます。
+      例: .button-primary, .section-heading, .card, .badge など。
+
+   2. 大きく分けて、次の3種類のクラスを使い分けます。
+      - コンポーネント系: 1つの部品を表すもの
+        例: .button-primary, .card, .badge, .navigation-link
+      - ユーティリティ系: 色・テキスト・背景など1つの性質だけを付けるもの
+        例: .text-primary, .text-accent, .bg-base-alt, .bg-surface
+      - 状態・アニメーション系: 見え方の変化や状態を表すもの
+        例: .is-visible, .scroll-animate, .is-active など
+
+   3. Tailwind CSS のクラスは、主に「レイアウト」「余白」「レスポンシブ切り替え」
+      を担当させ、色やフォントなどの見た目はできる限りこのCSSのクラスで表現します。
+      例: flex, grid, md:w-1/2, py-20 などはTailwind、
+          色やボタンデザインは .button-primary などのCSSクラス。
+
+   4. 新しいクラスを追加する場合は、下記いずれかの方針で命名してください。
+      - コンポーネント: [名詞]-[役割]
+        例: .hero-heading, .section-lead, .card-feature
+      - 状態 : is-[状態]
+        例: .is-active, .is-open
+      - ユーティリティ: text-*, bg-* など既存のパターンに合わせる
+
+   5. このファイルには「セクションごとのコメント（日本語）」を多めに入れています。
+      追加や変更を行う際は、近いセクションにコメントを足しながら編集してください。
+
+   ========================================================================== */
+
+
+/* =========================================
+   1. 全体ルール & カラー・フォント定義 (:root)
+   ========================================= */
+
+:root {
+    /* --- カラーパレット設定 --- */
+    /* 【ベースカラー: 60%】 背景などで最も広い面積を占める色 */
+    --color-base: #FFF7ED;      /* メイン背景色（明るいクリーム色） */
+    --color-base-alt: #FFF3E8;  /* セクション背景のバリエーション */
+    --color-surface: #FFFFFF;   /* カードや白枠など「面」の背景色 */
+
+    /* 【メインカラー: 30%】 ブランドを印象づける主役の色（グリーン系） */
+    --color-primary: #2F6F5C;         /* useAIグリーン（落ち着いた緑） */
+    --color-primary-hover: #245748;   /* ホバー時に少し濃くする緑 */
+    --color-primary-light: #E6F0ED;   /* ホバー背景などに使う極薄い緑 */
+
+    /* 【アクセントカラー: 10%】 注目させたい箇所に使う色（オレンジ系） */
+    --color-accent: #F97316;    /* 活気のあるオレンジ〜コーラル */
+
+    /* 【テキストカラー】 文字用の基本色 */
+    --text-heading: #111827;  /* 見出し用（ほぼ黒に近いグレー） */
+    --text-body: #374151;     /* 本文用（読みやすいダークグレー） */
+    --text-muted: #6B7280;    /* 補足や注釈に使う控えめなグレー */
+
+    /* --- フォントスタック設定 --- */
+    /* 本文・UI用: システムフォント（読み込み速度優先） */
+    --font-stack-body: -apple-system, system-ui, BlinkMacSystemFont,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    sans-serif;
+
+    /* 見出し用: ブランドフォント(Inter) + システムフォント */
+    /* ※HTML側でGoogle Fontsの読み込みが必要です */
+    --font-stack-heading: "Inter", var(--font-stack-body);
+
+    /* ヒーロー見出し用: 日本語ゴシック体を優先する設定 */
+    --font-stack-hero: "Hiragino Kaku Gothic ProN", "Hiragino Sans",
+    Meiryo, "Yu Gothic", YuGothic,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+
+/* =========================================
+   2. 基本設定 (Base)
+   ========================================= */
+
+/* ページ全体の基本設定 */
+body {
+    font-family: var(--font-stack-body);   /* サイト全体の基本フォント */
+    background-color: var(--color-base);   /* ページ全体の背景色 */
+    color: var(--text-body);               /* デフォルトの文字色 */
+    overflow-x: hidden;                    /* 横スクロール防止（レイアウト崩れ対策） */
+}
+
+/* 固定ヘッダーがあるページ用（HTML側で body.has-fixed-header を付与） */
+body.has-fixed-header {
+    /* 固定ヘッダー(h-20 = 80px)の高さ分だけコンテンツを下にずらす */
+    padding-top: 80px;
+}
+
+/* カスタムカーソルを使用するページ用（HTML側で body.has-custom-cursor を付与） */
+body.has-custom-cursor {
+    /* カスタムカーソル使用ページのみ標準カーソルを非表示にする */
+    cursor: none;
+}
+
+/* -----------------------------------------
+   見出しタグ (H1 - H6) のデフォルトスタイル
+   -----------------------------------------
+   - 「Tailwindクラスを付けない場合」の標準見た目を定義します。
+   - 特定セクションだけ大きくしたい場合は、HTML側で
+     Tailwindの text-◯xl や font-black を追加して上書きしてください。
+   ------------------------------------------ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-stack-heading);
+    color: var(--text-heading);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-top: 0; /* ブラウザ標準の余白差を減らすためリセット */
+}
+
+/* ページ全体のタイトルに相当（例: ページ最上部のH1） */
+h1 {
+    font-size: 2.5rem; /* 約40px */
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+/* セクション見出し（About, Events などの大見出し） */
+h2 {
+    font-size: 2rem; /* 約32px */
+    margin-bottom: 1.5rem;
+}
+
+/* カード内のタイトルや小見出し */
+h3 {
+    font-size: 1.5rem; /* 約24px */
+    margin-bottom: 1rem;
+}
+
+h4 {
+    font-size: 1.25rem; /* 約20px */
+    margin-bottom: 0.75rem;
+}
+
+/* スマホ画面（幅768px以下）での見出しサイズ調整 */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2rem; /* 約32px */
+    }
+
+    h2 {
+        font-size: 1.75rem; /* 約28px */
+    }
+
+    h3 {
+        font-size: 1.25rem; /* 約20px */
+    }
+}
+
+
+/* -----------------------------------------
+   汎用テキスト・見出し補助クラス
+   -----------------------------------------
+   - Hタグそのものではなく、「役割」を名前にしたクラスです。
+   - ブログや固定ページなど、Tailwindをあまり使わない場面でも再利用しやすくします。
+   ------------------------------------------ */
+
+/* ページのメインタイトル用（h1と一緒に使う想定） */
+.page-heading {
+    font-size: 2.5rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+/* セクションの見出し用（h2と一緒に使う想定） */
+.section-heading {
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+/* セクションの小見出しやラベル的なテキストに */
+.section-subheading {
+    font-size: 0.875rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+/* セクション冒頭のリード文（説明文）に */
+.section-lead {
+    font-size: 1.125rem;
+    line-height: 1.8;
+}
+
+/* 説明テキスト全般に使えるクラス（pタグなどと併用） */
+.text-body {
+    color: var(--text-body);
+}
+
+/* 補足説明やコピーライトなど、控えめなテキストに */
+.text-muted {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+}
+
+/* ブランドロゴや、見出しにブランドフォントを適用するためのクラス */
+.brand-text {
+    font-family: var(--font-stack-heading);
+}
+
+/* ヒーローエリアの日本語見出し用 */
+.hero-jp-font {
+    font-family: var(--font-stack-hero) !important;
+}
+
+
+/* -----------------------------------------
+   色に関するユーティリティクラス
+   ----------------------------------------- */
+
+.text-primary {
+    color: var(--color-primary);
+}
+
+.text-accent {
+    color: var(--color-accent);
+}
+
+.text-heading {
+    color: var(--text-heading);
+}
+
+.bg-base-alt {
+    background-color: var(--color-base-alt);
+}
+
+.bg-surface {
+    background-color: var(--color-surface); /* 一般的な白背景ブロック用 */
+}
+
+
+/* =========================================
+   3. UIコンポーネント (Buttons, Cards, Badges, Links)
+   ========================================= */
+
+/* -----------------------------------------
+   ボタンコンポーネント
+   -----------------------------------------
+   - .button-primary : メインCTA（参加ボタンなど）
+   - .button-secondary: サブCTA（「詳しく見る」など）
+   ※既存HTMLでは .btn-primary / .btn-secondary という名前でしたが、
+     今後のHTML書き換え時には .button-* に統一する想定です。
+     それまでの互換用として、旧クラス名も同じスタイルで定義しています。
+   ------------------------------------------ */
+
+.button-primary {
+    background-color: var(--color-primary);
+    color: #FFFFFF;
+    border: 2px solid var(--color-primary);
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    display: inline-block;
+    font-family: var(--font-stack-body);
+    box-shadow: 0 4px 6px -1px rgba(47, 111, 92, 0.2);
+    transition:
+            background-color 0.3s ease,
+            border-color 0.3s ease,
+            transform 0.3s ease,
+            box-shadow 0.3s ease;
+}
+
+.button-primary:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px -1px rgba(47, 111, 92, 0.3);
+}
+
+/* セカンダリボタン（白背景＋グリーン枠） */
+.button-secondary {
+    background-color: #FFFFFF;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    display: inline-block;
+    font-family: var(--font-stack-body);
+    transition:
+            background-color 0.3s ease,
+            transform 0.3s ease;
+}
+
+.button-secondary:hover {
+    background-color: var(--color-primary-light);
+    transform: translateY(-2px);
+}
+
+/* 既存HTMLとの互換用エイリアス（HTML書き換え完了後は削除予定） */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: #FFFFFF;
+    border: 2px solid var(--color-primary);
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    display: inline-block;
+    font-family: var(--font-stack-body);
+    box-shadow: 0 4px 6px -1px rgba(47, 111, 92, 0.2);
+    transition:
+            background-color 0.3s ease,
+            border-color 0.3s ease,
+            transform 0.3s ease,
+            box-shadow 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px -1px rgba(47, 111, 92, 0.3);
+}
+
+.btn-secondary {
+    background-color: #FFFFFF;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+    padding: 0.75rem 2rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    display: inline-block;
+    font-family: var(--font-stack-body);
+    transition:
+            background-color 0.3s ease,
+            transform 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--color-primary-light);
+    transform: translateY(-2px);
+}
+
+
+/* -----------------------------------------
+   ボタン・リンクのフォーカス可視化（アクセシビリティ）
+   ----------------------------------------- */
+
+.button-primary:focus-visible,
+.button-secondary:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.link-inline:focus-visible,
+.navigation-link:focus-visible,
+.nav-link:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+
+/* -----------------------------------------
+   カードコンポーネント
+   -----------------------------------------
+   - 一般的な「カード」UIをまとめた基礎クラスです。
+   - 影や角丸、枠線などの見た目を統一します。
+   ------------------------------------------ */
+
+.card {
+    background-color: var(--color-surface);
+    border-radius: 1rem;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition:
+            transform 0.3s ease,
+            box-shadow 0.3s ease,
+            border-color 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    border-color: #D1D5DB;
+}
+
+/* 旧名 .card-base との互換（HTML移行期用、将来的に削除予定） */
+.card-base {
+    background-color: var(--color-surface);
+    border-radius: 1rem;
+    border: 1px solid #E5E7EB;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transition:
+            transform 0.3s ease,
+            box-shadow 0.3s ease,
+            border-color 0.3s ease;
+}
+
+.card-base:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    border-color: #D1D5DB;
+}
+
+
+/* -----------------------------------------
+   バッジ（小さなラベル）
+   ------------------------------------------ */
+
+/* バッジの共通スタイル */
+.badge {
+    display: inline-block;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-family: var(--font-stack-body);
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+}
+
+/* アクセントカラーのバッジ（初心者歓迎 等）
+   ※HTMLでは .badge と併用する想定（例: class="badge badge-accent"） */
+.badge-accent {
+    background-color: #FFF7ED; /* ベース色 */
+    color: var(--color-accent);
+    border: 1px solid var(--color-accent);
+}
+/* プライマリカラー(緑色)のバッジ */
+.badge-primary {
+    background-color: var(--color-primary-light);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary);
+}
+
+/* グレー(ニュートラル)のバッジ */
+.badge-neutral {
+    background-color: #F3F4F6;
+    color: var(--text-body);
+    border: 1px solid #D1D5DB;
+}
+
+/* 白色のバッジ */
+.badge-white {
+    background-color: #FFFFFF;
+    color: var(--text-heading);
+    border: 1px solid #E5E7EB;
+}
+
+
+/* -----------------------------------------
+   テキストリンク（本文中のリンク用スタイル）
+   ------------------------------------------ */
+
+.link-inline {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+    font-weight: 500;
+}
+
+.link-inline:hover {
+    color: var(--color-primary-hover);
+}
+
+
+/* =========================================
+   4. レイアウト・装飾・アニメーション
+   ========================================= */
+
+/* -----------------------------------------
+   ナビゲーションリンク（ヘッダーメニュー）
+   ------------------------------------------ */
+
+.navigation-link,
+.nav-link {
+    position: relative;
+    color: var(--text-body);
+    font-weight: 600;
+    font-family: var(--font-stack-heading);
+    transition: color 0.3s ease;
+}
+
+.navigation-link:hover,
+.nav-link:hover {
+    color: var(--color-primary);
+}
+
+/* 下線アニメーション */
+.navigation-link::after,
+.nav-link::after {
+    content: "";
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 0;
+    background-color: var(--color-primary);
+    transition: width 0.3s ease;
+}
+
+.navigation-link:hover::after,
+.nav-link:hover::after {
+    width: 100%;
+}
+
+
+/* -----------------------------------------
+   ヘッダー背景（固定ナビゲーション）
+   ------------------------------------------ */
+
+#main-nav {
+    background-color: rgba(255, 247, 237, 0.95); /* ベース色の透過 */
+    border-bottom: 1px solid #F3E8DB;
+}
+
+/* backdrop-filter 対応ブラウザ向け（未対応環境は背景色のみ） */
+@supports (backdrop-filter: blur(10px)) {
+    #main-nav {
+        backdrop-filter: blur(10px); /* すりガラス効果 */
+    }
+}
+
+
+/* -----------------------------------------
+   ヒーローエリア背景（グラデーション＋ドットノイズ）
+   ------------------------------------------ */
+
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: linear-gradient(to bottom, #F2F8F5 0%, var(--color-base) 100%);
+    z-index: 0;
+}
+
+/* ドット状のノイズオーバーレイ */
+.noise-overlay {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(#D1D5DB 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.4;
+    z-index: 0;
+    pointer-events: none;
+}
+
+
+/* -----------------------------------------
+   スクロール出現アニメーション
+   - IntersectionObserver で .is-visible が付与される前提
+   ------------------------------------------ */
+
+.scroll-animate {
+    opacity: 0;
+    transform: translateY(30px);
+    transition:
+            opacity 0.8s ease-out,
+            transform 0.8s ease-out;
+}
+
+.scroll-animate.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* =========================================
+   5. 特殊機能（カスタムカーソル）
+   ========================================= */
+
+.custom-cursor {
+    pointer-events: none; /* カーソル自体がクリック対象にならないようにする */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1rem;
+    height: 1rem;
+    background-color: var(--color-accent);
+    border-radius: 50%;
+    opacity: 0.8;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(249, 115, 22, 0.4);
+    transition:
+            width 0.2s,
+            height 0.2s,
+            opacity 0.2s,
+            background-color 0.2s,
+            transform 0.1s ease-out;
+    will-change: transform;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 900;
+    font-size: 1.2rem;
+    white-space: nowrap;
+    font-family: var(--font-stack-heading);
+}
+
+/* インタラクティブ要素（リンクやボタン）ホバー時のカーソル変化
+   実際の挙動はJavaScript側と合わせて調整してください。 */
+.interactive:hover ~ .custom-cursor,
+a:hover ~ .custom-cursor,
+button:hover ~ .custom-cursor {
+    width: 2.5rem;
+    height: 2.5rem;
+    opacity: 0.3;
+    background-color: var(--color-primary);
+}
+/* =========================================
+   6. 追加の役割クラス（Tailwind未定義色の補完）
+   ========================================= */
+
+/* 背景色ユーティリティ */
+.bg-primary {
+    background-color: var(--color-primary);
+}
+
+.bg-accent {
+    background-color: var(--color-accent);
+}
+
+/* プライマリカラーの薄いティント（10%透過相当） */
+.bg-primary-soft {
+    background-color: rgba(47, 111, 92, 0.10);
+}
+
+/* ボーダー色ユーティリティ */
+.border-l-primary {
+    border-left-color: var(--color-primary);
+}
+
+.border-l-accent {
+    border-left-color: var(--color-accent);
+}
+
+/* グループホバー時のテキスト色変化（Tailwind group-hover:text-* の代替） */
+.group:hover .text-primary-on-group-hover {
+    color: var(--color-primary);
+}
+
+.group:hover .text-accent-on-group-hover {
+    color: var(--color-accent);
+}
+
+/* モバイルメニューボタンのフォーカス可視化（アクセシビリティ強化） */
+#mobile-menu-btn:focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+}
+/* =========================================
+   5. 特殊機能（カスタムカーソル）
+   ========================================= */
+/* style.css 内の記述 */
+
+#custom-cursor {
+    /* 既存のプロパティ */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 1rem;   /* 初期の大きさ */
+    height: 1rem;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    pointer-events: none; /* クリックを邪魔しないように必須 */
+    z-index: 9999;
+    transform: translate3d(0, 0, 0) translate(-50%, -50%);
+
+    /* --- ここを追加・変更 --- */
+    /* width, height, background-color, opacity の変化を0.6秒かけて滑らかにする */
+    transition: width 0.6s ease-out,
+    height 0.6s ease-out,
+    background-color 0.6s ease,
+    opacity 0.6s ease;
+}
+
+
+/* インタラクティブ要素にホバーした時の変化 */
+.custom-cursor.is-interactive {
+    width: 2.5rem;
+    height: 2.5rem;
+    top: -1.25rem;
+    left: -1.25rem;
+    opacity: 0.2;
+    background-color: var(--color-primary);
+}
+
+/* クリックした瞬間の変化 */
+.custom-cursor.is-clicking {
+    transform: scale(0.8);
+    transition-duration: 0.1s;
+}
+/* JavaScriptなしでもコンテンツを表示 */
+.scroll-animate {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+}
+
+/* JavaScriptが有効な場合は初期状態を隠す（common.jsで制御） */
+.js-enabled .scroll-animate {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+
+/* =========================================
+    カード & UI要素
+    ========================================= */
+.card-base {
+    /* (省略) */
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* ここで変化の速度を指定 */
+}
+.card-base:hover {
+    transform: translateY(-5px); /* 上に5px浮き上がる */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); /* 影を濃くする */
+    border-color: #D1D5DB;
+}

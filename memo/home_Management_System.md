@@ -1,4 +1,4 @@
-## TOPページのセクション管理設計（完成版）
+## TOPページのセクション設計管理
 
 ### 文書の目的
 
@@ -68,23 +68,23 @@ TOPページと下層ページで共通して使う画像を、この `images/` 
 
 ### 4. JavaScriptの読み込み順ルール
 
-**4-1. 読み込み順の基本原則**
-すべてのHTMLファイルで、`common.js` を最初に読み込み、そのあとにセクション別JS（`section-◯◯.js`）を読み込みます。[12][13][2]
+4-1. 読み込み順の基本原則（改訂案）​
+すべてのHTMLファイルで、js/common.js を最初に読み込み、そのあとにセクション別JS（js/section-◯◯.js）を読み込みます。​
 
-**4-2. 具体的な読み込み例**
-- `index.html` の場合：
-```
-<script src="common.js"></script>
-<script src="section-hero.js"></script>
-<script src="section-events.js"></script>
-```
+4-2. 具体的な読み込み例（改訂案）​
 
-- `events.html`（下層ページ）の場合：
-```
-<script src="common.js"></script>
-<script src="section-events.js"></script>
-```
+index.html の場合：​
 
+```
+<script src="js/common.js"></script>
+<script src="js/section-hero.js"></script>
+<script src="js/section-events.js"></script>
+```
+events.html（下層ページ）の場合：​
+```
+<script src="js/common.js"></script>
+<script src="js/section-events.js"></script>
+```
 **4-3. 読み込み順の理由**
 この順序にする理由は、セクション別JS（`section-◯◯.js`）が `common.js` の中に記述された共通関数や共通処理に依存する可能性があるためです。[13][12][3]
 「共通 → 個別」の順番を固定しておくことで、依存関係による実行エラーを防ぐことができます。[12][13][3]
