@@ -3,141 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>子供AI教室 | useAI Club</title>
+    <title>子供AI教室 作品集 | useAI Club</title>
+
+    <!-- Google Fonts: Inter (見出し用) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- 共通スタイルシート -->
+    <link rel="stylesheet" href="../style.css">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        /* ページ固有のスタイル */
+        body.has-fixed-header {
+            padding-top: 80px;
         }
-        body {
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f5f5f5;
-            padding: 20px;
-        }
-        .container {
+
+        .page-container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 40px 20px;
         }
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: #2c3e50;
+
+        /* --- 修正: イベントセクションのデザイン強化 --- */
+        .event-section-card {
+            background-color: #ffffff; /* 背景を白に */
+            border-radius: 1rem;       /* 角丸 */
+            padding: 40px;             /* 内側の余白 */
+            margin-bottom: 60px;       /* セクション間の余白 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* 影 */
+            border: 1px solid #E5E7EB; /* 薄い枠線 */
         }
-        .subtitle {
-            color: #7f8c8d;
-            margin-bottom: 40px;
+
+        .event-header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #F3F4F6; /* ヘッダー下の区切り線 */
         }
-        .event-section {
-            margin-bottom: 60px;
-            padding-bottom: 40px;
-            border-bottom: 2px solid #ecf0f1;
-        }
-        .event-section:last-child {
-            border-bottom: none;
-        }
-        .event-header h2 {
-            font-size: 1.8rem;
-            color: #3498db;
-            margin-bottom: 10px;
-        }
+
         .event-meta {
-            color: #7f8c8d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 15px;
         }
-        .event-description {
-            margin-bottom: 20px;
-            line-height: 1.8;
-        }
-        .event-link {
-            display: inline-block;
-            color: #3498db;
-            text-decoration: none;
-            margin-bottom: 20px;
-        }
-        .event-link:hover {
-            text-decoration: underline;
-        }
+
+        /* グリッドレイアウト */
         .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
         }
-        .game-card {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
+
+        .game-card-link {
             text-decoration: none;
-            color: inherit;
             display: block;
+            height: 100%;
         }
+
+        /* カードデザイン */
+        .game-card {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #F9FAFB; /* カード背景を少しグレーに */
+            border: 1px solid #E5E7EB;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
         .game-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--color-primary);
         }
-        .game-card img {
+
+        .game-image {
             width: 100%;
             height: 200px;
             object-fit: cover;
-            border-radius: 4px;
-            margin-bottom: 15px;
+            border-bottom: 1px solid #E5E7EB;
         }
-        .game-card h3 {
-            font-size: 1.3rem;
+
+        .card-content {
+            padding: 1.25rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-badge-wrapper {
             margin-bottom: 10px;
-            color: #2c3e50;
         }
-        .game-card:hover h3 {
-            color: #3498db;
+
+        .game-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
         }
+
         .game-creator {
-            color: #7f8c8d;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
         }
-        .game-ai {
-            background: #3498db;
-            color: white;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
+
         .game-prompt {
-            font-size: 0.9rem;
-            font-style: italic;
-            color: #555;
+            font-size: 0.85rem;
+            color: var(--text-body);
+            background-color: #ffffff;
             padding: 10px;
-            background: white;
-            border-left: 3px solid #3498db;
-            border-radius: 4px;
+            border-radius: 0.5rem;
+            border: 1px solid #E5E7EB;
+            margin-top: auto; /* 下寄せ */
+            font-style: italic;
         }
-        #loading {
+
+        .loading-state {
             text-align: center;
-            padding: 40px;
-            color: #7f8c8d;
+            padding: 60px 20px;
+        }
+
+        @media (max-width: 768px) {
+            .event-section-card {
+                padding: 20px; /* スマホでは余白を減らす */
+                margin-bottom: 40px;
+            }
+            .games-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            body.has-fixed-header {
+                padding-top: 60px;
+            }
         }
     </style>
 </head>
-<body>
-<div class="container">
-    <h1>useAIクラブ ゲームワークショップ作品集</h1>
-    <p class="subtitle">子供たち考えたゲームをAIで生成</p>
+<!-- 修正: has-custom-cursor を削除し、bg-base (クリーム色) を適用 -->
+<body class="has-fixed-header text-body bg-base">
 
-    <div id="loading">読み込み中...</div>
-    <div id="all-events"></div>
-</div>
+<!-- ヘッダー -->
+<header id="main-header" class="fixed w-full top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-200">
+    <nav id="main-nav" class="flex items-center justify-between px-6 py-4 transition-all duration-300 container mx-auto">
+        <div class="flex items-center">
+            <a href="index.html" class="text-2xl font-black uppercase tracking-tight interactive flex items-center gap-1 brand-text no-underline">
+                <span class="text-primary">USE</span>
+                <span class="text-heading">AI</span>
+                <span class="text-accent">CLUB</span>
+            </a>
+        </div>
+
+        <div class="hidden md:flex items-center space-x-8">
+            <a href="index.html" class="navigation-link text-sm hover:text-primary transition-colors">home</a>
+
+        </div>
+
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-heading" aria-label="メニューを開く">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+    </nav>
+
+    <!-- モバイルメニュー (簡易実装) -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-200 p-4 absolute w-full shadow-lg">
+        <div class="flex flex-col space-y-4">
+            <a href="index.html" class="block text-sm font-bold text-primary">トップページへ戻る</a>
+        </div>
+    </div>
+</header>
+
+<main>
+    <div class="page-container">
+        <div class="text-center mb-12 pt-8">
+            <span class="inline-block py-1 px-3 rounded-full bg-white border border-accent/20 text-accent text-xs font-bold mb-4 tracking-wider">
+                Works Gallery
+            </span>
+            <h1 class="text-3xl md:text-4xl font-black text-heading mb-4">useAIクラブ ゲームワークショップ作品集</h1>
+            <p class="text-muted max-w-2xl mx-auto">子供たちが考えたゲームをAIで生成・公開しています。<br>自由な発想とAIのコラボレーションをご覧ください。</p>
+        </div>
+
+        <div id="loading" class="loading-state">
+            <div class="inline-block w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
+            <p class="text-muted">読み込み中...</p>
+        </div>
+        <div id="all-events"></div>
+    </div>
+</main>
+
+<!-- フッター -->
+<footer class="bg-white border-t border-gray-200 py-10 text-center text-sm text-muted mt-10">
+    <div class="container mx-auto px-6">
+        <p class="mb-4 brand-text font-bold text-lg text-primary">useaiclub.com</p>
+        <p>&copy; 2025 useAIクラブ. All rights reserved.</p>
+    </div>
+</footer>
 
 <script>
+    // モバイルメニューの簡易制御
+    document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+        const menu = document.getElementById('mobile-menu');
+        menu.classList.toggle('hidden');
+    });
+
     fetch('folders.json')
         .then(response => response.json())
         .then(folders => {
@@ -154,57 +228,56 @@
 
             allEvents.forEach(({folder, data}) => {
                 let html = `
-                        <section class="event-section">
-                            <div class="event-header">
-                                <h2>${data.eventName}</h2>
-                                <p class="event-meta">📅 ${data.eventDate}</p>
-                                <p class="event-description">${data.eventDescription}</p>
-                                ${data.eventURL ? `<a href="${data.eventURL}" class="event-link" target="_blank">イベント詳細を見る →</a>` : ''}
+                    <!-- 修正: セクション全体をカード化 (.event-section-card) -->
+                    <section class="event-section-card">
+                        <div class="event-header">
+                            <div class="flex items-center justify-between flex-wrap gap-4 mb-2">
+                                <h2 class="text-2xl font-bold text-primary m-0">${data.eventName}</h2>
+                                <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-bold">
+                                    📅 ${data.eventDate}
+                                </span>
                             </div>
-                            <div class="games-grid">`;
+                            <p class="text-body leading-relaxed mb-4">${data.eventDescription}</p>
+                            ${data.eventURL ? `<a href="${data.eventURL}" class="text-accent hover:text-accent-hover font-bold inline-flex items-center gap-1 no-underline hover:underline" target="_blank" rel="noopener noreferrer">イベント詳細を見る <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : ''}
+                        </div>
+                        <div class="games-grid">`;
 
                 data.games.forEach(g => {
-                    // 年齢表示の組み立て
-                    let ageText = '';
-                    if (g.age) {
-                        ageText = `${g.age}歳`;
-                    }
-
-                    // 学年表示の組み立て
-                    let gradeText = '';
-                    if (g.grade) {
-                        gradeText = (ageText ? '・' : '') + g.grade;
-                    }
-
-                    // 作成者情報の組み立て
+                    let ageText = g.age ? `${g.age}歳` : '';
+                    let gradeText = g.grade ? (ageText ? '・' : '') + g.grade : '';
                     let creatorInfo = `👤 ${g.creator}`;
                     if (ageText || gradeText) {
                         creatorInfo += ` （${ageText}${gradeText}）`;
                     }
 
-                    // プロンプト表示の組み立て
-                    let promptHtml = '';
-                    if (g.prompt) {
-                        promptHtml = `<div class="game-prompt">「${g.prompt}」</div>`;
-                    }
+                    let promptHtml = g.prompt ? `<div class="game-prompt">「${g.prompt}」</div>` : '';
 
                     html += `
-            <a href="${folder}/${g.id}.html" class="game-card">
-                <span class="game-ai">${g.ai}</span>
-                <img src="${folder}/${g.id}.png" alt="${g.title}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23ddd%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22>No Image</text></svg>'">
-                <h3>${g.title}</h3>
-                <p class="game-creator">${creatorInfo}</p>
-                ${promptHtml}
-            </a>`;
+                        <a href="${folder}/${g.id}.html" class="game-card-link">
+                            <!-- 修正: ゲームカードのデザイン調整 -->
+                            <article class="game-card">
+                                <img src="${folder}/${g.id}.png"
+                                     alt="${g.title}"
+                                     class="game-image"
+                                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22200%22><rect fill=%22%23F3F4F6%22 width=%22300%22 height=%22200%22/><text x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%239CA3AF%22 font-size=%2216%22>No Image</text></svg>'">
+                                <div class="card-content">
+                                    <div class="game-badge-wrapper">
+                                        <span class="inline-block bg-primary text-white text-xs px-2 py-1 rounded">${g.ai}</span>
+                                    </div>
+                                    <h3 class="game-title">${g.title}</h3>
+                                    <p class="game-creator">${creatorInfo}</p>
+                                    ${promptHtml}
+                                </div>
+                            </article>
+                        </a>`;
                 });
-
 
                 html += `</div></section>`;
                 document.getElementById('all-events').innerHTML += html;
             });
         })
         .catch(error => {
-            document.getElementById('loading').innerHTML = 'エラーが発生しました: ' + error.message;
+            document.getElementById('loading').innerHTML = '<p class="text-red-500 font-bold">エラーが発生しました: ' + error.message + '</p>';
         });
 </script>
 </body>
