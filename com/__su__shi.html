@@ -1,12 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>発起人すっしー | useAIクラブ</title>
+    <meta name="description" content="useAIクラブ創設者すっしーによる、クラブ立ち上げの経緯">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- カスタムスタイルシート -->
+    <link rel="stylesheet" href="style.css">
 </head>
 
-aaa
 <body>
+
+<!-- ヘッダー -->
+<header id="main-header" class="fixed w-full top-0 z-50">
+    <nav id="main-nav" class="flex items-center justify-between px-6 py-4 transition-all duration-300">
+        <div class="flex items-center">
+            <a href="index.html" class="text-2xl font-black uppercase tracking-tight interactive flex items-center gap-1 brand-text">
+                <span class="text-primary">USE</span>
+                <span class="text-heading">AI</span>
+                <span class="text-accent">CLUB</span>
+            </a>
+        </div>
+
+        <!-- デスクトップメニュー -->
+        <div class="hidden md:flex items-center space-x-8">
+            <a href="index.html#section-about" class="navigation-link text-sm">useAIクラブとは</a>
+            <a href="__su__shi/index.html" class="navigation-link text-sm">発起人すっしー</a>
+            <a href="https://useaiclub.connpass.com/" target="_blank" rel="nofollow noopener noreferrer" class="navigation-link text-sm">定例イベント</a>
+            <a href="workshop-games/index.html" class="navigation-link text-sm">AIワークショップ作品</a>
+            <a href="index.html#section-tools" class="navigation-link text-sm">生成AIツールガイド</a>
+            <a href="index.html#section-join" class="button-primary text-sm px-6 py-2">参加する</a>
+        </div>
+
+        <!-- モバイルメニューボタン -->
+        <button id="mobile-menu-btn" class="md:hidden p-2 text-heading" aria-label="メニューを開く">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
+    </nav>
+
+    <!-- モバイルメニュー -->
+    <div id="mobile-menu" class="hidden md:hidden bg-base-alt border-b border-gray-200 p-4 absolute w-full">
+        <div class="flex flex-col space-y-4">
+            <a href="index.html#section-about" class="navigation-link text-sm">useAIクラブとは</a>
+            <a href="__su__shi/index.html" class="navigation-link text-sm">発起人すっしー</a>
+            <a href="https://useaiclub.connpass.com/" target="_blank" rel="nofollow noopener noreferrer" class="navigation-link text-sm">定例イベント</a>
+            <a href="workshop-games/index.html" class="navigation-link text-sm">AIワークショップ作品</a>
+            <a href="index.html#section-tools" class="navigation-link text-sm">生成AIツールガイド</a>
+            <a href="index.html#section-join" class="button-primary text-sm px-6 py-2 text-center">参加する</a>
+        </div>
+    </div>
+</header>
+
+<!-- メインコンテンツ -->
+<main class="pt-20">
+
+    <!-- すっしープロフィールセクション -->
+    <section class="section section-profile py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <!-- テキスト（左側） -->
+                <div class="md:w-1/2">
+                    <span class="badge badge-primary mb-4">Profile</span>
+                    <h2 class="text-4xl md:text-5xl font-black text-heading mb-6 scroll-animate flex items-center gap-3">
+                        すっしー
+                        <a href="https://x.com/__su__shi"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="text-primary hover:text-accent transition-colors">
+                            <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            </svg>
+                        </a>
+                    </h2>
+                    <p class="text-body mb-6 leading-relaxed text-lg scroll-animate">
+                        useAIクラブ創設者。2022年頃に生成AIと出会い、その可能性に衝撃を受けると同時に、「AIを本当に使いこなすには学習コストが高い」と実感。一人で学ぶのではなく、同じ関心を持つ仲間と共に学び合える場を作りたいという思いから、松本市でuseAIクラブを立ち上げました。
+                    </p>
+                    <div class="card p-5 border-l-4 border-l-primary scroll-animate">
+                        <p class="text-sm text-muted leading-relaxed mb-3">
+                            フリーランス｜FileMakerを利用したiPhoneアプリ制作、子供プログラミング教室講師、動画制作など｜コミュニティ活動：UseAIクラブ主催、Shinshu WordPress Meetup運営
+                        </p>
+                        <p class="text-sm text-muted leading-relaxed">
+                            ChatGPT、Claude、Perplexity、Geminiなど主に利用しています。APIでアプリから生成AIを使えるように試行錯誤中
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 画像（右側） -->
+                <div class="md:w-1/2 flex justify-center">
+                    <div class="card w-full max-w-md aspect-square flex items-center justify-center overflow-hidden scroll-animate">
+                        <img src="images/sushi_profile.jpg"
+                             alt="すっしー プロフィール画像"
+                             class="w-full h-full object-cover"
+                             onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\'w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-sm\'>画像を準備中</div>';">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 記事セクション -->
+    <section class="section section-story py-20 bg-base-alt">
+        <div class="container mx-auto px-6">
+            <div class="text-center max-w-4xl mx-auto mb-12">
+                <span class="badge badge-accent mb-4">Story</span>
+                <h1 class="section-heading mb-6 scroll-animate">useAIクラブ（コミュニティ）立ち上げの経緯</h1>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="card p-8 md:p-12 scroll-animate">
+                    <div class="text-body leading-relaxed text-lg space-y-6">
+                        <p>
+                            useAIクラブを立ち上げた原点は、「生成AIの知識をより深め、実際に活用できるようになりたい」という純粋な探究心にありました。2022年頃、ChatGPTなどの生成AIを初めて使ったとき、文章生成や画像作成、情報検索といった多様な用途に大きな可能性を感じると同時に、その革新性に強い衝撃を受けました。一方で、当時のAIは精度や実用性の面で課題も多く、業務レベルで使うにはまだハードルが高いと感じていました。
+                        </p>
+
+                        <p>
+                            それから数年、2025年には生成AIの進化が著しく、用途や状況を選べばビジネスやプロジェクトにも十分活用できるレベルに到達しています。しかし、テキスト生成、画像生成、音楽生成など、それぞれの分野で使いこなすには独自の学習が必要であり、「AIを本当に使いこなすには学習コストが高い」と感じていました。だからこそ、一人で学ぶのではなく、同じ関心を持つ仲間と共に学び合える場を作りたいと考え、useAIクラブの立ち上げとオフライン交流会の開催を決意しました。
+                        </p>
+
+                        <p>
+                            松本市は長野県内でも大きな都市ですが、東京などの都市部と比べるとAIやテクノロジー関連のコミュニティやイベントが非常に少ないのが現状です。地方で生成AIに興味を持つ人が集まり、気軽に学び合える場が不足していることに気づき、「自分たちの地域でもAIを学び、活用する文化を根付かせたい」という思いが強くなりました。東京やオンラインのAI勉強会に参加した経験から、「地方でも同じような刺激的な場を作りたい」と感じたことも、活動の後押しとなりました。
+                        </p>
+
+                        <p>
+                            松本市で活動するにあたって「地域の課題をAIで解決したい」という願いもあります。地方の中小企業や個人事業主が生成AIを活用し、地域経済の活性化、業務効率化はもちろん新規事業に挑戦できるきっかけ環境づくりつながると考えています。また、子どもの教育にもAIを取り入れ、次世代の育成に貢献したいというテーマもあります。AIを活用する力を子どもたちにも身につけてもらい、松本市から新しい可能性を広げていきたいと考えています。
+                        </p>
+
+                        <p>
+                            useAIクラブは無料で参加でき、初心者からAI開発者まで幅広い参加者を歓迎しています。これは「AIの知識やスキルを誰もが気軽に学べる場を作りたい」という思いからです。私自身がAIを学び始めた頃、「もっと気軽に学べる場があれば」と感じていたことを、コミュニティを通じて実現したいと考えています。もくもく会形式のイベントで、参加者が自由に作業しながら気軽に話せる場を提供し、参加者同士の交流から新しいアイデアやプロジェクト、成功体験が誰かのアイデアに触発される効率的なAI勉強会を目指しています。
+                        </p>
+
+                        <p>
+                            生成AIの普及により、AIは専門家だけでなく一般の人々にも開かれた技術になりつつあります。私は「AIは一部のエンジニアだけのものではなく、誰でも活用できる」時代が来ると信じており、useAIクラブを通じてその実現に貢献したいと考えています。
+                        </p>
+
+                        <p class="text-right text-muted font-medium mt-8">
+                            記：すっしー
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<!-- フッター -->
+<footer class="bg-base-alt border-t border-gray-200 py-10 text-center text-sm text-muted">
+    <div class="container mx-auto px-6">
+        <p class="mb-4 brand-text font-bold text-lg text-primary">useaiclub.com</p>
+        <p>&copy; 2025 useAIクラブ. All rights reserved.</p>
+    </div>
+</footer>
+
+<!-- JavaScript -->
+<script src="js/common.js"></script>
 
 </body>
 </html>
