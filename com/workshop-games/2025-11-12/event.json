@@ -5,40 +5,40 @@
   "eventURL": "",
   "games": [
     {
-      "id": "taro2023",
+      "id": "01",
       "creator": "たろう",
       "age": 9,
       "grade": "小学3年生",
-      "ai": "ChatGPT",
-      "prompt": "宇宙を冒険するゲームを作って",
-      "title": "宇宙大冒険"
+      "ai": "Gemini 2.5 Flash",
+      "prompt": "カーチェイスゲーム",
+      "title": "カーチェイスゲーム"
     },
     {
-      "id": "hanako2024",
+      "id": "02",
       "creator": "はなこ",
       "age": 10,
       "grade": "小学4年生",
-      "ai": "Claude",
-      "prompt": "パズルのゲームを作りたい",
-      "title": "パズルゲーム"
+      "ai": "Gemini 2.5 Flash",
+      "prompt": "フォロワーを集めてボスを倒すゲーム",
+      "title": "フォロワーを集めてボスを倒すゲーム"
     },
     {
-      "id": "taro2023",
+      "id": "03",
       "creator": "たろう",
       "age": 9,
       "grade": "小学3年生",
-      "ai": "ChatGPT",
-      "prompt": "宇宙を冒険するゲームを作って",
-      "title": "宇宙大冒険"
+      "ai": "Gemini 2.5 Flash",
+      "prompt": "岐阜県が愛知県を食べるゲーム",
+      "title": "岐阜県が愛知県を食べるゲーム"
     },
     {
-      "id": "hanako2024",
+      "id": "04",
       "creator": "はなこ",
       "age": 10,
       "grade": "小学4年生",
-      "ai": "Claude",
-      "prompt": "パズルのゲームを作りたい",
-      "title": "パズルゲーム"
+      "ai": "Gemini 2.5 Flash",
+      "prompt": "ハズレを探せ！",
+      "title": "ハズレを探せ！"
     }
   ]
 }
