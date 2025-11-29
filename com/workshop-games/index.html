@@ -160,7 +160,7 @@
         </div>
 
         <div class="hidden md:flex items-center space-x-8">
-            <a href="index.html" class="navigation-link text-sm hover:text-primary transition-colors">home</a>
+            <a href="../index.html" class="navigation-link text-sm hover:text-primary transition-colors">home</a>
 
         </div>
 
@@ -253,7 +253,7 @@
                     let promptHtml = g.prompt ? `<div class="game-prompt">「${g.prompt}」</div>` : '';
 
                     html += `
-                        <a href="${folder}/${g.id}.html" class="game-card-link">
+                        <a href="${folder}/${g.id}.html" class="game-card-link" target="_blank" rel="noopener noreferrer">
                             <!-- 修正: ゲームカードのデザイン調整 -->
                             <article class="game-card">
                                 <img src="${folder}/${g.id}.png"
