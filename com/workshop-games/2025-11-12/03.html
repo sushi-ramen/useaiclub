@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>岐阜県が愛知県を食べるゲーム</title>
+    <!-- Tailwind CSS CDNを読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* 日本語表示のためにシステムフォントを優先 */
+        body {
+            font-family: 'Inter', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', 'Noto Sans CJK JP', sans-serif;
+            background-color: #f3f4f6; /* 淡いグレーの背景 */
+        }
+        #gameCanvas {
+            border: 4px solid #4b5563; /* ダークグレーの枠線 */
+            background-color: #ffffff; /* キャンバス背景は白 */
+            touch-action: none; /* モバイルでのデフォルトのタッチアクションを無効化 */
+            width: 100%; /* 親要素に合わせて幅を100%に */
+            height: 400px; /* ある程度の固定高さを設定（レスポンシブなサイズ調整はJSで行う） */
+            max-width: 800px; /* 最大幅を制限 */
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body class="p-4 flex flex-col items-center justify-center min-h-screen">
+
+    <div id="game-container" class="w-full max-w-xl bg-white p-6 rounded-2xl shadow-2xl space-y-4">
+        <h1 class="text-3xl font-bold text-gray-800 text-center mb-4">岐阜県が愛知県を食べるゲーム</h1>
+
+        <!-- ゲーム情報の表示エリア -->
+        <div class="flex justify-between text-lg font-semibold text-gray-700">
+            <div>スコア: <span id="score">0</span></div>
+        </div>
+
+        <!-- ゲームキャンバス -->
+        <canvas id="gameCanvas" width="800" height="400" class="mx-auto"></canvas>
+
+        <!-- 操作説明とボタン -->
+        <div class="text-center space-y-3">
+            <p class="text-sm text-gray-600">
+                <span class="font-bold">操作方法:</span>
+                <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">クリック</kbd> / 
+                <kbd class="px-2 py-1 bg-gray-200 rounded text-xs">タップ</kbd>
+                で岐阜県をその位置まで移動させます。
+            </p>
+            <button id="startButton" class="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-md transition duration-150 transform hover:scale-105">
+                ゲームスタート
+            </button>
+        </div>
+
+        <!-- メッセージモーダル -->
+        <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4">
+            <div class="bg-white p-8 rounded-xl shadow-2xl text-center space-y-6 w-full max-w-sm transform transition-all duration-300 scale-100" id="modalContent">
+                <h2 id="modalTitle" class="text-3xl font-extrabold"></h2>
+                <p id="modalMessage" class="text-lg text-gray-700"></p>
+                <button id="restartButton" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition duration-150 transform hover:scale-105">
+                    もう一度挑戦！
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // CanvasとContextの取得
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        const restartButton = document.getElementById('restartButton');
+        const messageModal = document.getElementById('messageModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const scoreDisplay = document.getElementById('score');
+
+        // ゲーム定数
+        const STATE = {
+            INITIAL: 'INITIAL',
+            PLAYING: 'PLAYING',
+            CLEARED: 'CLEARED',
+            GAMEOVER: 'GAMEOVER'
+        };
+
+        let gameState = STATE.INITIAL;
+        let score = 0;
+
+        // ゲームオブジェクト
+        let player = {};
+        let goal = {};
+        let enemies = [];
+        // キーボード操作を削除したため、keysオブジェクトは不要
+
+        // 敵の都道府県リスト
+        const ENEMY_PREFECTURES = [
+            { name: '東京都', color: '#A0522D', radius: 15 },
+            { name: '大阪府', color: '#B8860B', radius: 14 },
+            { name: '北海道', color: '#5F9EA0', radius: 16 },
+            { name: '福岡県', color: '#6B8E23', radius: 13 },
+            { name: '福井県', color: '#D2B48C', radius: 12 },
+            { name: '石川県', color: '#DC143C', radius: 13 },
+            { name: '富山県', color: '#00CED1', radius: 14 },
+            { name: '長野県', color: '#2E8B57', radius: 15 },
+            { name: '三重県', color: '#4682B4', radius: 12 },
+            { name: '滋賀県', color: '#F4A460', radius: 16 },
+            { name: '神奈川県', color: '#708090', radius: 15 },
+            { name: '沖縄県', color: '#BA55D3', radius: 14 },
+        ];
+
+        // --- 初期設定とリサイズ処理 ---
+
+        function resizeCanvas() {
+            // 親要素の幅に合わせてCanvasの幅を設定
+            const container = document.getElementById('game-container');
+            // 最大幅を800に制限しつつ、コンテナ幅の90%を使用
+            const newWidth = Math.min(container.clientWidth * 0.95, 800);
+            canvas.width = newWidth;
+            canvas.height = Math.max(newWidth / 2, 300); // 縦横比を考慮しつつ最低300pxを確保
+
+            // ゲーム再設定（リサイズ後の配置調整）
+            if (gameState !== STATE.INITIAL) {
+                setupGameElements();
+            } else {
+                // 初期画面の描画
+                drawInitialScreen();
+            }
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- ゲーム要素の初期化 ---
+
+        function setupGameElements() {
+            // プレイヤー（岐阜県）の初期化
+            player = {
+                x: 50,
+                y: canvas.height / 2,
+                radius: 20,
+                color: '#4CAF50', // 緑色
+                speed: 4,
+                name: '岐阜県',
+                vx: 0,
+                vy: 0
+            };
+
+            // ゴール（愛知県）の初期化
+            goal = {
+                x: canvas.width - 50,
+                y: canvas.height / 2,
+                radius: 25,
+                color: '#FF4500', // 赤色
+                name: '愛知県'
+            };
+
+            // 敵（他の都道府県）の初期化
+            enemies = [];
+            ENEMY_PREFECTURES.forEach((pref) => {
+                let enemy = {
+                    ...pref,
+                    x: Math.random() * (canvas.width * 0.7) + canvas.width * 0.1,
+                    y: Math.random() * (canvas.height * 0.8) + canvas.height * 0.1,
+                    vx: (Math.random() - 0.5) * 0.5, // 非常にゆっくりとしたランダムな横方向の動き
+                    vy: (Math.random() - 0.5) * 0.5, // 非常にゆっくりとしたランダムな縦方向の動き
+                };
+                // プレイヤーやゴールから遠い位置に再配置 (簡単なチェック)
+                while (Math.abs(enemy.x - player.x) < 150 || Math.abs(enemy.x - goal.x) < 150) {
+                     enemy.x = Math.random() * (canvas.width * 0.7) + canvas.width * 0.1;
+                }
+                enemies.push(enemy);
+            });
+        }
+
+        // --- 描画関数 ---
+
+        function drawObject(obj, isPlayer = false) {
+            ctx.beginPath();
+            ctx.arc(obj.x, obj.y, obj.radius, 0, Math.PI * 2);
+            ctx.fillStyle = obj.color;
+            ctx.fill();
+            ctx.strokeStyle = isPlayer ? '#222' : '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // 名前表示
+            ctx.fillStyle = '#1f2937';
+            ctx.font = `${Math.floor(obj.radius / 2.5)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(obj.name, obj.x, obj.y + obj.radius + 10);
+        }
+
+        function draw() {
+            // 画面クリア
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 敵の描画
+            enemies.forEach(enemy => drawObject(enemy));
+
+            // ゴール（愛知県）の描画
+            drawObject(goal);
+
+            // プレイヤー（岐阜県）の描画
+            drawObject(player, true);
+
+            scoreDisplay.textContent = score;
+        }
+
+        function drawInitialScreen() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#fff';
+            ctx.font = '30px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('「岐阜県が愛知県を食べるゲーム」', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = '18px sans-serif';
+            ctx.fillText('スタートボタンを押して開始', canvas.width / 2, canvas.height / 2 + 20);
+        }
+
+        // --- 更新関数 ---
+
+        function update() {
+            if (gameState !== STATE.PLAYING) return;
+
+            // 1. プレイヤーの移動
+            // マウス/タッチ操作による移動を反映（ターゲットベースの移動）
+            if (player.tx && player.ty) {
+                // タッチベクトルに基づいて移動
+                const dx = player.tx - player.x;
+                const dy = player.ty - player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist > player.speed / 2) { // ターゲットに近すぎない場合のみ移動
+                    player.vx = (dx / dist) * player.speed;
+                    player.vy = (dy / dist) * player.speed;
+                } else {
+                    // 目的地に到達または非常に近い
+                    player.x = player.tx; // 目的地に正確に合わせる
+                    player.y = player.ty;
+                    player.vx = 0;
+                    player.vy = 0;
+                    delete player.tx; // 目的地に到達
+                    delete player.ty;
+                }
+            } else {
+                // ターゲットがない場合は停止
+                player.vx = 0; player.vy = 0;
+            }
+
+
+            player.x += player.vx;
+            player.y += player.vy;
+
+            // 画面境界での衝突
+            if (player.x < player.radius) player.x = player.radius;
+            if (player.x > canvas.width - player.radius) player.x = canvas.width - player.radius;
+            if (player.y < player.radius) player.y = player.radius;
+            if (player.y > canvas.height - player.radius) player.y = canvas.height - player.radius;
+
+            // 2. 敵の移動
+            enemies.forEach(enemy => {
+                enemy.x += enemy.vx;
+                enemy.y += enemy.vy;
+
+                // 画面境界での反射（単純化のため）
+                if (enemy.x < enemy.radius || enemy.x > canvas.width - enemy.radius) {
+                    enemy.vx *= -1;
+                    enemy.x += enemy.vx; // 画面外に出るのを防ぐ
+                }
+                if (enemy.y < enemy.radius || enemy.y > canvas.height - enemy.radius) {
+                    enemy.vy *= -1;
+                    enemy.y += enemy.vy; // 画面外に出るのを防ぐ
+                }
+            });
+
+            // 3. 衝突判定
+            checkCollision();
+        }
+
+        // --- 衝突判定関数 ---
+
+        function checkCollision() {
+            // ユーティリティ関数：2点間の距離の2乗
+            const distSq = (obj1, obj2) => (obj1.x - obj2.x) ** 2 + (obj1.y - obj2.y) ** 2;
+
+            // 岐阜県（プレイヤー） vs 愛知県（ゴール）
+            const goalDistSq = distSq(player, goal);
+            if (goalDistSq < (player.radius + goal.radius) ** 2) {
+                gameState = STATE.CLEARED;
+                endGame(true);
+                return;
+            }
+
+            // 岐阜県（プレイヤー） vs 敵の都道府県
+            for (const enemy of enemies) {
+                const enemyDistSq = distSq(player, enemy);
+                if (enemyDistSq < (player.radius + enemy.radius) ** 2) {
+                    gameState = STATE.GAMEOVER;
+                    endGame(false);
+                    return;
+                }
+            }
+        }
+
+        // --- ゲーム管理関数 ---
+
+        function gameLoop() {
+            if (gameState === STATE.PLAYING) {
+                update();
+                draw();
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function startGame() {
+            if (gameState === STATE.PLAYING) return;
+
+            // 初期化
+            score = 0;
+            scoreDisplay.textContent = score;
+            setupGameElements();
+            messageModal.classList.add('hidden');
+            messageModal.classList.remove('flex');
+            gameState = STATE.PLAYING;
+            startButton.textContent = 'プレイ中...';
+            startButton.disabled = true;
+
+            gameLoop();
+        }
+
+        function endGame(isCleared) {
+            startButton.textContent = 'ゲームスタート';
+            startButton.disabled = false;
+
+            if (isCleared) {
+                modalTitle.textContent = '✨大勝利！愛知県をゲット！✨';
+                modalTitle.className = 'text-3xl font-extrabold text-green-600';
+                modalMessage.textContent = '岐阜県が目標を達成しました。おめでとうございます！';
+                document.getElementById('modalContent').classList.remove('border-red-500');
+                document.getElementById('modalContent').classList.add('border-green-500');
+                restartButton.classList.remove('bg-red-600');
+                restartButton.classList.add('bg-green-600');
+
+            } else {
+                modalTitle.textContent = '💥ゲームオーバー💥';
+                modalTitle.className = 'text-3xl font-extrabold text-red-600';
+                modalMessage.textContent = '敵の都道府県に触れてしまいました。もう一度挑戦しますか？';
+                document.getElementById('modalContent').classList.remove('border-green-500');
+                document.getElementById('modalContent').classList.add('border-red-500');
+                restartButton.classList.remove('bg-green-600');
+                restartButton.classList.add('bg-red-600');
+            }
+
+            messageModal.classList.remove('hidden');
+            messageModal.classList.add('flex');
+        }
+
+        // --- イベントリスナー ---
+
+        // 1. キーボード操作リスナーは削除しました。
+
+        // 2. ボタン操作
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+        // 3. タッチ操作 (モバイル対応)
+        let isTouching = false;
+
+        // 共通のターゲット設定ロジック
+        function setPlayerTarget(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const targetX = clientX - rect.left;
+            const targetY = clientY - rect.top;
+
+            // プレイヤーの目標位置を設定
+            player.tx = targetX;
+            player.ty = targetY;
+        }
+
+        // タッチ開始
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault(); // スクロール防止
+            if (gameState !== STATE.PLAYING) return;
+            isTouching = true;
+            setPlayerTarget(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        // タッチ移動
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // スクロール防止
+            if (gameState !== STATE.PLAYING || !isTouching) return;
+            setPlayerTarget(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        // タッチ終了
+        canvas.addEventListener('touchend', () => {
+            if (gameState !== STATE.PLAYING) return;
+            isTouching = false;
+            // touchendではターゲットを消さず、最後の位置で停止させることでタップ時の移動を実現
+        });
+
+        // 4. マウス操作 (クリック)
+        window.onload = function() {
+            resizeCanvas();
+            drawInitialScreen();
+            
+            // Canvasにクリックイベントリスナーを追加
+            canvas.addEventListener('click', (e) => {
+                if (gameState !== STATE.PLAYING) return;
+                setPlayerTarget(e.clientX, e.clientY);
+            });
+        };
+
+    </script>
+</body>
+</html>

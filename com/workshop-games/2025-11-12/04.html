@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ハズレを探せ！</title>
+    <!-- Tailwind CSS CDNを読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Interフォントを優先し、フォールバックを設定 */
+        body {
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #e5e7eb; /* Light gray background */
+        }
+        /* ゲームボードのスタイル */
+        .game-grid {
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+        }
+        /* ボタンの基本的なスタイルとトランジション */
+        .game-button {
+            transition: all 0.15s ease-in-out;
+            box-shadow: 0 4px #4b5563; /* Shadow for button press effect */
+            border-bottom: 2px solid #374151;
+        }
+        /* ボタンのアクティブ時のスタイル（押した時のへこみ） */
+        .game-button:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px #4b5563;
+        }
+        /* ハズレを押した時の特別なアニメーション */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        .shake-on-fail {
+            animation: shake 0.5s;
+        }
+        /* 非表示になったボタンのスタイル */
+        .button-hidden {
+            visibility: hidden; /* 要素のスペースは残すが非表示にする */
+            pointer-events: none; /* クリックイベントを無効にする */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <!-- メインコンテナ -->
+    <div id="gameContainer" class="w-full max-w-md bg-white p-6 rounded-xl shadow-2xl space-y-6">
+        
+        <!-- ヘッダーとスコア表示 -->
+        <div class="text-center space-y-2">
+            <h1 class="text-3xl font-extrabold text-gray-800">ハズレを探せ！</h1>
+            <p id="scoreDisplay" class="text-2xl font-bold text-blue-600">ポイント: 0 / 6</p>
+        </div>
+
+        <!-- メッセージエリア -->
+        <div class="min-h-[3rem] flex items-center justify-center">
+            <p id="messageArea" class="text-xl font-semibold text-gray-700 transition-opacity duration-300">好きなボタンを選んでください。</p>
+        </div>
+
+        <!-- 9つのボタンのグリッド -->
+        <div id="buttonGrid" class="game-grid grid gap-4 aspect-square">
+            <!-- JavaScriptでボタンが動的に生成されます -->
+        </div>
+
+        <!-- リスタートボタン（非表示からスタート） -->
+        <div class="text-center pt-4">
+            <button id="restartButton" onclick="startGame()"
+                    class="hidden bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg shadow-md transition-colors duration-200 focus:outline-none focus:ring-4 focus:ring-green-300"
+                    aria-label="ゲームをリスタート">
+                もう一度遊ぶ
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // グローバル変数
+        const WIN_SCORE = 6;
+        let score = 0;
+        let bombIndex = -1;
+        let isGameOver = false;
+        // 既に当たりのボタンを押して非表示になったボタンのインデックスを保持する配列
+        let clearedIndices = []; 
+
+        // DOM要素の取得
+        const buttonGrid = document.getElementById('buttonGrid');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const messageArea = document.getElementById('messageArea');
+        const restartButton = document.getElementById('restartButton');
+
+        // Firestoreの利用は不要なため、APIキーやFirebaseの設定は省略します。
+
+        /**
+         * 0から8までのランダムな整数を生成し、ハズレの位置（爆弾）として設定する。
+         * ただし、既にクリアされたボタンはハズレにしない。
+         */
+        function setBomb() {
+            let nextBombIndex;
+            do {
+                // 0から8までのランダムな整数を生成
+                nextBombIndex = Math.floor(Math.random() * 9);
+            } while (clearedIndices.includes(nextBombIndex)); // クリア済みのボタンでなければ確定
+
+            bombIndex = nextBombIndex;
+            console.log(`次のハズレはボタン番号 ${bombIndex} です。`);
+        }
+
+        /**
+         * スコア表示とボタンの状態を更新する。
+         * @param {'initial'|'success'|'fail'|'clear'} status - 現在のゲーム状態
+         */
+        function updateUI(status = 'initial') {
+            scoreDisplay.textContent = `ポイント: ${score} / ${WIN_SCORE}`;
+            restartButton.classList.add('hidden');
+
+            // すべてのボタン要素を取得
+            const buttons = buttonGrid.querySelectorAll('.game-button');
+
+            if (isGameOver) {
+                // ゲームオーバー時の処理
+                messageArea.textContent = 'ゲームオーバー！ハズレを押してしまいました...';
+                messageArea.classList.add('text-red-600', 'shake-on-fail');
+                messageArea.classList.remove('text-gray-700', 'text-green-600');
+                restartButton.classList.remove('hidden');
+
+                // 全ボタンを無効化し、ハズレを赤く表示
+                buttons.forEach((btn, index) => {
+                    btn.disabled = true;
+                    // すべての特殊な色クラスを削除
+                    btn.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700', 'bg-green-400', 'bg-green-300', 'text-green-800', 'text-white', 'font-bold', 'button-hidden');
+
+                    if (clearedIndices.includes(index)) {
+                        // クリア済みのボタンは非表示を維持し、テキストは「OK」
+                        btn.classList.add('button-hidden');
+                        btn.textContent = 'OK';
+                    } else if (index === bombIndex) {
+                        // ハズレを赤く表示
+                        btn.classList.add('bg-red-500', 'text-white', 'font-extrabold');
+                        btn.textContent = 'ハズレ';
+                    } else {
+                        // 残りのボタンは灰色にして無効化
+                        btn.classList.add('bg-gray-400', 'text-gray-600');
+                        btn.textContent = '？';
+                    }
+                });
+
+            } else if (score === WIN_SCORE) {
+                // ゲームクリア時の処理 (ハズレを表示するよう修正)
+                messageArea.textContent = '🎉 ゲームクリア！6ポイント達成です！おめでとうございます！';
+                messageArea.classList.remove('text-red-600', 'text-gray-700', 'shake-on-fail');
+                messageArea.classList.add('text-green-600');
+                restartButton.classList.remove('hidden');
+
+                // 全ボタンを無効化し、ハズレを赤く、他を緑に表示
+                buttons.forEach((btn, index) => {
+                    btn.disabled = true;
+                    // すべての特殊な色クラスを削除
+                    btn.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700', 'bg-green-400', 'bg-gray-400', 'text-gray-600', 'text-white');
+
+                    if (clearedIndices.includes(index)) {
+                        // クリア済みのボタンは非表示を維持
+                        btn.classList.add('button-hidden');
+                        btn.textContent = 'OK';
+                    } else if (index === bombIndex) {
+                        // 残りのハズレを赤く表示
+                        btn.classList.remove('button-hidden'); // 念のため非表示を解除
+                        btn.classList.add('bg-red-500', 'text-white', 'font-extrabold');
+                        btn.textContent = 'ハズレ';
+                    } else {
+                        // 残りのボタンはクリア色に統一（ただしスコア6でクリアなので、通常ここはハズレのみのはず）
+                        btn.classList.add('bg-green-300', 'text-green-800', 'font-bold');
+                        btn.textContent = 'OK';
+                    }
+                });
+
+            } else {
+                // プレイ中の処理（リセット処理を確実に実行）
+                messageArea.textContent = (status === 'initial') ? '好きなボタンを選んでください。' : '当たり！次のハズレはどこかな？';
+                messageArea.classList.remove('text-red-600', 'text-green-600', 'shake-on-fail');
+                messageArea.classList.add('text-gray-700');
+
+                // ボタンの状態をリセット
+                buttons.forEach((btn, index) => {
+                    // すべての色/状態クラスを削除し、初期状態のクラスを追加
+                    btn.classList.remove('bg-red-500', 'bg-gray-400', 'text-white', 'font-extrabold', 'bg-green-300', 'text-green-800', 'bg-green-400', 'text-white', 'font-bold', 'button-hidden');
+                    
+                    if (clearedIndices.includes(index)) {
+                        // クリア済みのボタンは非表示にする
+                        btn.disabled = true;
+                        btn.classList.add('button-hidden');
+                        btn.textContent = 'OK';
+                    } else {
+                        // 未クリアのボタンは有効化し、「？」に戻す
+                        btn.disabled = false;
+                        btn.classList.add('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                        btn.textContent = '？';
+                    }
+                });
+            }
+        }
+
+        /**
+         * ボタンがクリックされた時の処理
+         * @param {number} index - クリックされたボタンのインデックス (0-8)
+         */
+        function handleButtonClick(index, buttonElement) {
+            if (isGameOver || score === WIN_SCORE) return;
+
+            if (index === bombIndex) {
+                // ハズレ（ゲームオーバー）
+                isGameOver = true;
+                // クリックされたボタンを一時的に赤くしてアニメーション
+                buttonElement.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                buttonElement.classList.add('bg-red-500', 'text-white', 'shake-on-fail');
+                buttonElement.textContent = 'BOOM';
+
+                // アニメーション後にUIを確定状態に更新
+                setTimeout(() => {
+                    updateUI('fail');
+                }, 500);
+
+            } else {
+                // 当たり（ポイント獲得）
+                score++;
+                clearedIndices.push(index); // クリア済みインデックスに追加
+
+                // クリックされたボタンを一時的に緑に
+                buttonElement.disabled = true;
+                buttonElement.classList.remove('bg-gray-200', 'hover:bg-gray-300', 'text-gray-700');
+                buttonElement.classList.add('bg-green-400', 'text-white', 'font-bold');
+                buttonElement.textContent = 'OK';
+
+                if (score === WIN_SCORE) {
+                    // クリア処理
+                    updateUI('clear');
+                } else {
+                    // 次のラウンドへ (0.5秒後に全ボタンをリセットして次のハズレを設定)
+                    setTimeout(() => {
+                        // クリックされたボタンを非表示にする
+                        buttonElement.classList.remove('bg-green-400', 'text-white', 'font-bold');
+                        buttonElement.classList.add('button-hidden');
+
+                        setBomb();
+                        updateUI('success'); // updateUIが他のボタンを「？」にリセットします
+                    }, 500);
+                }
+            }
+        }
+
+        /**
+         * ゲームを初期化し、開始する。（完全リセットに対応）
+         */
+        function startGame() {
+            score = 0;
+            isGameOver = false;
+            clearedIndices = []; // クリア済みボタンリストをリセット
+            // 既存のボタンを削除し、再作成することで、リセットをより確実にする
+            createButtons(); 
+            setBomb();
+            updateUI('initial');
+        }
+
+        /**
+         * 9つのボタンをDOMに生成する。
+         */
+        function createButtons() {
+            buttonGrid.innerHTML = ''; // グリッドをクリア
+            for (let i = 0; i < 9; i++) {
+                const button = document.createElement('button');
+                button.id = `btn-${i}`;
+                button.textContent = '？';
+                // 初期状態のクラスを設定
+                button.className = 'game-button w-full h-full text-2xl font-semibold rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-700 transition-all duration-150 transform';
+                button.onclick = () => handleButtonClick(i, button);
+                buttonGrid.appendChild(button);
+            }
+        }
+
+        // 初期化処理
+        window.onload = function() {
+            // スコアボードのフォントを確実にInterにする
+            document.body.style.fontFamily = "Inter, sans-serif";
+            createButtons();
+            startGame();
+        };
+    </script>
+
+</body>
+</html>

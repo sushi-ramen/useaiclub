@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>フォロワー・ラッシュ</title>
+    <style>
+        /* グローバルなスタイル設定 */
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1a1a2e; /* ダークな背景色 */
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        /* ゲームコンテナ */
+        #game-container {
+            position: relative;
+            background-color: #16213e;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        /* キャンバス（ゲーム画面） */
+        canvas {
+            border: 4px solid #0f3460;
+            border-radius: 8px;
+            background-color: #2b3a55; /* ゲームフィールドの色 */
+            display: block;
+        }
+
+        /* 情報パネル */
+        #info-panel {
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 600px;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .info-item {
+            padding: 8px 15px;
+            background-color: #3b4d6b;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            min-width: 150px;
+        }
+
+        /* メッセージボックス（モーダル風） */
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 30px;
+            background-color: rgba(30, 30, 50, 0.95);
+            border: 3px solid #e94560;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.5);
+            z-index: 100;
+            text-align: center;
+            display: none; /* 初期状態では非表示 */
+        }
+
+        #message-box h2 {
+            color: #e94560;
+            margin-top: 0;
+            font-size: 2.5rem;
+        }
+
+        #message-box p {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        #message-box button {
+            background-color: #e94560;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        #message-box button:hover {
+            background-color: #c93550;
+            transform: translateY(-2px);
+        }
+
+        /* 操作説明 */
+        #controls {
+            margin-top: 20px;
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>フォロワー・ラッシュ - ボス討伐ゲーム</h1>
+        <canvas id="gameCanvas"></canvas>
+        <div id="info-panel">
+            <div class="info-item">仲間数: <span id="follower-count">0</span></div>
+            <div class="info-item">ユーザーID: <span id="user-id">---</span></div>
+        </div>
+        <div id="controls">
+            操作: 矢印キー (↑↓←→) で主人公を動かします。
+        </div>
+
+        <div id="message-box">
+            <h2 id="message-title"></h2>
+            <p id="message-text"></p>
+            <button id="message-button">ゲームを再スタート</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKの読み込み --><script type="module">
+        // Firebaseのインポート
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // グローバル変数の定義 (Canvas環境から提供されるものを利用)
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // ゲーム変数のスコープを広げる
+        let canvas, ctx;
+        let player, followers, panels, boss;
+        let isGameRunning = true;
+        let lastTime = 0;
+        const FPS = 60;
+        const targetFrameDuration = 1000 / FPS;
+
+        // Firebase初期化と認証
+        let app, db, auth;
+        let userId = 'loading...';
+        let isAuthReady = false;
+
+        const initFirebase = async () => {
+            try {
+                // Firebaseの初期化
+                if (Object.keys(firebaseConfig).length > 0) {
+                    app = initializeApp(firebaseConfig);
+                    db = getFirestore(app);
+                    auth = getAuth(app);
+                    setLogLevel('debug');
+
+                    console.log("Firebase initialized.");
+
+                    // 認証状態の監視とカスタム認証トークンでのサインイン
+                    onAuthStateChanged(auth, (user) => {
+                        if (user) {
+                            userId = user.uid;
+                            document.getElementById('user-id').textContent = userId;
+                            console.log("User signed in:", userId);
+                            isAuthReady = true;
+                        } else {
+                            console.log("No user signed in. Attempting anonymous sign-in or custom token sign-in.");
+                            signInUser();
+                        }
+                    });
+
+                    const signInUser = async () => {
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                                console.log("Signed in with custom token.");
+                            } else {
+                                await signInAnonymously(auth);
+                                console.log("Signed in anonymously.");
+                            }
+                        } catch (error) {
+                            console.error("Firebase Auth Error:", error);
+                            userId = 'AUTH_ERROR';
+                            document.getElementById('user-id').textContent = userId;
+                            isAuthReady = true; // エラーでもゲームは続行
+                        }
+                    };
+
+                    if (!auth.currentUser) {
+                        await signInUser();
+                    }
+
+                } else {
+                    console.warn("Firebase config is missing. Running in standalone mode.");
+                    userId = 'STANDALONE_USER_' + Math.random().toString(36).substring(2, 9);
+                    document.getElementById('user-id').textContent = userId;
+                    isAuthReady = true;
+                }
+
+            } catch (error) {
+                console.error("Failed to initialize Firebase:", error);
+                userId = 'INIT_ERROR';
+                document.getElementById('user-id').textContent = userId;
+                isAuthReady = true;
+            }
+        };
+
+        // ----------------------------------------------------
+        // ゲームロジック
+        // ----------------------------------------------------
+
+        // ゲーム定数
+        const CANVAS_WIDTH = 600;
+        const CANVAS_HEIGHT = 600;
+        const PLAYER_WIDTH = 15; // 主人公の幅
+        const PLAYER_HEIGHT = 20; // 主人公の高さ
+        const FOLLOWER_SIZE = 6;
+        const PLAYER_SPEED = 4;
+        const PANEL_COUNT = 10;
+        const PANEL_SIZE = 40;
+        const BOSS_SIZE = 50;
+
+        // プレイヤーオブジェクト
+        player = {
+            x: CANVAS_WIDTH / 2,
+            y: CANVAS_HEIGHT / 2,
+            width: PLAYER_WIDTH,
+            height: PLAYER_HEIGHT,
+            dx: 0,
+            dy: 0,
+            color: '#ffdd00' // 人らしい黄色っぽい色
+        };
+
+        // 仲間配列
+        followers = [];
+
+        // パネル配列
+        panels = [];
+
+        // ボスオブジェクト
+        boss = {
+            x: CANVAS_WIDTH - BOSS_SIZE / 2 - 20,
+            y: BOSS_SIZE / 2 + 20,
+            color: '#e94560', // 赤
+            isDefeated: false,
+            requiredFollowers: 0 // ボスを倒すのに必要な仲間数
+        };
+
+        // パネルの初期配置
+        function generatePanels() {
+            panels = [];
+            for (let i = 0; i < PANEL_COUNT; i++) {
+                const randomX = Math.random() * (CANVAS_WIDTH - PANEL_SIZE * 2) + PANEL_SIZE;
+                const randomY = Math.random() * (CANVAS_HEIGHT - PANEL_SIZE * 2) + PANEL_SIZE;
+                const value = Math.floor(Math.random() * 5) + 1; // 1から5のランダムな仲間増加数
+
+                // プレイヤーやボスから離れた場所に配置するための簡単なチェック
+                const distPlayer = Math.sqrt(Math.pow(randomX - player.x, 2) + Math.pow(randomY - player.y, 2));
+                const distBoss = Math.sqrt(Math.pow(randomX - boss.x, 2) + Math.pow(randomY - boss.y, 2));
+
+                if (distPlayer > 100 && distBoss > 100) {
+                    panels.push({
+                        x: randomX,
+                        y: randomY,
+                        width: PANEL_SIZE,
+                        height: PANEL_SIZE,
+                        value: value,
+                        color: `rgba(70, 200, 100, 0.8)` // 緑
+                    });
+                } else {
+                    i--; // 遠くに配置できなければ再試行
+                }
+            }
+        }
+
+        // ゲームの状態をリセット
+        function resetGame() {
+            player.x = CANVAS_WIDTH / 2;
+            player.y = CANVAS_HEIGHT / 2;
+            player.dx = 0;
+            player.dy = 0;
+            followers = [];
+            boss.isDefeated = false;
+            // ボスの必要仲間数をリセット時にランダムに設定 (20から35の間の値)
+            boss.requiredFollowers = Math.floor(Math.random() * 16) + 20;
+            isGameRunning = true;
+            hideMessage();
+            generatePanels();
+            updateFollowerCountDisplay();
+        }
+
+        // 仲間を追加
+        function addFollowers(count) {
+            for (let i = 0; i < count; i++) {
+                // 新しい仲間は最後の仲間の位置、またはプレイヤーの位置の近くに配置
+                const target = followers.length > 0 ? followers[followers.length - 1] : player;
+                followers.push({
+                    x: target.x + (Math.random() * 2 - 1) * 5, // ターゲットの少し横に配置
+                    y: target.y + (Math.random() * 2 - 1) * 5,
+                    color: 'rgba(100, 150, 255, 0.7)', // 薄い青
+                    trail: [] // 追従のための軌跡データ
+                });
+            }
+        }
+
+        // 描画関数
+        function draw() {
+            // 背景クリア
+            ctx.fillStyle = '#2b3a55';
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // 1. パネルの描画
+            ctx.fillStyle = '#46c864';
+            ctx.font = '24px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            panels.forEach(panel => {
+                // パネルの枠
+                ctx.strokeStyle = '#2d8c3d';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(panel.x - panel.width / 2, panel.y - panel.height / 2, panel.width, panel.height);
+
+                // パネルの数字
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`+${panel.value}`, panel.x, panel.y + 2);
+            });
+
+            // 2. ボスの描画
+            ctx.beginPath();
+            ctx.arc(boss.x, boss.y, BOSS_SIZE, 0, Math.PI * 2);
+            ctx.fillStyle = boss.isDefeated ? '#46c864' : boss.color;
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '24px Inter, sans-serif'; // フォントサイズを調整
+            if (boss.isDefeated) {
+                ctx.fillText('WIN', boss.x, boss.y - 12);
+                ctx.font = '18px Inter, sans-serif';
+                ctx.fillText('!', boss.x, boss.y + 12);
+            } else {
+                ctx.fillText('BOSS', boss.x, boss.y - 12);
+                ctx.font = '18px Inter, sans-serif';
+                ctx.fillText(`(x${boss.requiredFollowers})`, boss.x, boss.y + 12); // 必要仲間数を表示
+            }
+            ctx.closePath();
+
+            // 3. 仲間の描画 (円形を維持)
+            followers.forEach(follower => {
+                ctx.beginPath();
+                ctx.arc(follower.x, follower.y, FOLLOWER_SIZE, 0, Math.PI * 2);
+                ctx.fillStyle = follower.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+
+            // 4. プレイヤーの描画 (四角形に変更)
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(player.x - player.width / 2, player.y - player.height / 2, player.width, player.height);
+        }
+
+        // ゲーム状態の更新関数
+        function update() {
+            if (!isGameRunning) return;
+
+            // 1. プレイヤーの位置更新
+            const nextX = player.x + player.dx * PLAYER_SPEED;
+            const nextY = player.y + player.dy * PLAYER_SPEED;
+
+            // 画面端の境界チェック
+            if (nextX >= player.width / 2 && nextX <= CANVAS_WIDTH - player.width / 2) {
+                player.x = nextX;
+            }
+            if (nextY >= player.height / 2 && nextY <= CANVAS_HEIGHT - player.height / 2) {
+                player.y = nextY;
+            }
+
+            // 2. 仲間の位置更新 (追従ロジック)
+            for (let i = 0; i < followers.length; i++) {
+                const current = followers[i];
+                // ターゲットは前の仲間、またはプレイヤー
+                const target = i === 0 ? player : followers[i - 1];
+
+                const distance = Math.sqrt(Math.pow(target.x - current.x, 2) + Math.pow(target.y - current.y, 2));
+
+                // 追従距離の閾値 (前の要素と一定距離離れてから追従を始める)
+                const followDistance = (i === 0 ? Math.max(player.width, player.height) * 1.5 : FOLLOWER_SIZE * 2.5); // 主人公のサイズに合わせて調整
+
+                if (distance > followDistance) {
+                    // 追跡のための方向計算
+                    const angle = Math.atan2(target.y - current.y, target.x - current.x);
+                    const speed = PLAYER_SPEED * 1.1; // プレイヤーより少し速く
+
+                    current.x += Math.cos(angle) * speed;
+                    current.y += Math.sin(angle) * speed;
+                }
+            }
+
+            // 3. パネルとの衝突判定
+            panels = panels.filter(panel => {
+                const panelHalfW = panel.width / 2;
+                const panelHalfH = panel.height / 2;
+                const playerHalfW = player.width / 2;
+                const playerHalfH = player.height / 2;
+
+                const isColliding = (
+                    player.x + playerHalfW > panel.x - panelHalfW &&
+                    player.x - playerHalfW < panel.x + panelHalfW &&
+                    player.y + playerHalfH > panel.y - panelHalfH &&
+                    player.y - playerHalfH < panel.y + panelHalfH
+                );
+
+                if (isColliding) {
+                    addFollowers(panel.value);
+                    updateFollowerCountDisplay();
+                    // 衝突したパネルは削除
+                    return false;
+                }
+                // 衝突していないパネルは残す
+                return true;
+            });
+
+            // 4. ボスとの衝突判定
+            if (!boss.isDefeated) {
+                // 主人公とボスの衝突判定 (四角と円)
+                // まず主人公の矩形の中心点からボスの円の中心点への距離を計算
+                const closestX = Math.max(player.x - player.width / 2, Math.min(boss.x, player.x + player.width / 2));
+                const closestY = Math.max(player.y - player.height / 2, Math.min(boss.y, player.y + player.height / 2));
+
+                const distanceX = boss.x - closestX;
+                const distanceY = boss.y - closestY;
+                const distSquared = (distanceX * distanceX) + (distanceY * distanceY);
+
+                if (distSquared < (BOSS_SIZE * BOSS_SIZE)) { // 半径の二乗と比較
+                    if (followers.length >= boss.requiredFollowers) { // 仲間数がボスの要求数以上なら勝利
+                        boss.isDefeated = true;
+                        isGameRunning = false;
+                        showMessage("ゲームクリア！", `目標の${boss.requiredFollowers}人の仲間を集め、ボスを倒しました！`);
+                    } else {
+                        isGameRunning = false;
+                        showMessage("ゲームオーバー", `仲間が${followers.length}人しかおらず、ボスの要求${boss.requiredFollowers}人に達していませんでした。もっと仲間を集めましょう！`);
+                    }
+                }
+            }
+        }
+
+        // 仲間数の表示を更新
+        function updateFollowerCountDisplay() {
+            document.getElementById('follower-count').textContent = followers.length;
+        }
+
+        // メッセージボックスの表示
+        function showMessage(title, text) {
+            document.getElementById('message-title').textContent = title;
+            document.getElementById('message-text').textContent = text;
+            document.getElementById('message-box').style.display = 'block';
+        }
+
+        // メッセージボックスの非表示
+        function hideMessage() {
+            document.getElementById('message-box').style.display = 'none';
+        }
+
+        // キー入力ハンドラ
+        let keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            handleMovement();
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+            handleMovement();
+        });
+
+        function handleMovement() {
+            player.dx = 0;
+            player.dy = 0;
+
+            if (keys['ArrowUp'] || keys['w'] || keys['W']) {
+                player.dy = -1;
+            }
+            if (keys['ArrowDown'] || keys['s'] || keys['S']) {
+                player.dy = 1;
+            }
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                player.dx = -1;
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                player.dx = 1;
+            }
+
+            // 斜め移動の正規化 (速度を一定に保つ)
+            if (player.dx !== 0 && player.dy !== 0) {
+                const length = Math.sqrt(player.dx * player.dx + player.dy * player.dy);
+                player.dx /= length;
+                player.dy /= length;
+            }
+        }
+
+        // メインゲームループ
+        function gameLoop(currentTime) {
+            const deltaTime = currentTime - lastTime;
+
+            if (deltaTime >= targetFrameDuration) {
+                update();
+                draw();
+                lastTime = currentTime - (deltaTime % targetFrameDuration);
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 初期化処理
+        function initGame() {
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
+
+            document.getElementById('message-button').addEventListener('click', resetGame);
+
+            resetGame(); // ゲーム開始状態にリセット
+            gameLoop(0); // ゲームループ開始
+        }
+
+        // ウィンドウロード時にFirebase初期化とゲーム開始
+        window.onload = async () => {
+            await initFirebase();
+            initGame();
+        };
+
+    </script>
+</body>
+</html>

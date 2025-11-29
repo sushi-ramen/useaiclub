@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カーチェイス：対向車を避けろ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* カスタムCSS：Tailwindと組み合わせてゲームの雰囲気を出す */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a1a2e; /* 暗い背景 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .game-container {
+            width: 90vw;
+            max-width: 400px; /* スマートフォンサイズに最適化 */
+            background-color: #2e2e4e;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            position: relative;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: 600px; /* 縦長ゲーム */
+            background-color: #333; /* 道路の色 */
+            border-radius: 0.5rem;
+            display: block;
+            margin: 0 auto;
+        }
+        .hud-item {
+            font-weight: 700;
+            color: #fff;
+            padding: 0.5rem 0;
+            text-align: center;
+        }
+        .game-over-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 1rem;
+            z-index: 100;
+        }
+        .start-button {
+            padding: 0.75rem 2rem;
+            background: linear-gradient(145deg, #ff416c, #ff4b2b); /* 鮮やかなグラデーション */
+            color: white;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 9999px;
+            box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4);
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .start-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 75, 43, 0.6);
+        }
+        .start-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 15px rgba(255, 75, 43, 0.4);
+        }
+        /* ガソリンゲージのスタイル */
+        .fuel-bar-container {
+            height: 10px;
+            background-color: #4f4f6e;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #fuelBar {
+            height: 100%;
+            background-color: #4CAF50; /* 緑 */
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <!-- スコアと燃料表示エリア -->
+    <div class="grid grid-cols-2 gap-4 mb-4">
+        <div class="hud-item bg-gray-700 rounded-lg p-2 shadow-inner">
+            スコア: <span id="scoreDisplay">0</span>
+        </div>
+        <div class="hud-item bg-gray-700 rounded-lg p-2 shadow-inner">
+            <div class="text-xs mb-1">燃料残り時間: <span id="fuelTimeRemainingDisplay">10.0</span>s</div>
+            <div class="fuel-bar-container">
+                <div id="fuelBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ゲームキャンバス -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- ゲームオーバー/スタートモーダル -->
+    <div id="modal" class="game-over-modal hidden">
+        <h1 id="modalTitle" class="text-4xl font-bold text-white mb-4">カーチェイス</h1>
+        <p id="modalMessage" class="text-lg text-gray-300 mb-8 text-center"></p>
+        <button id="startButton" class="start-button">ゲーム開始</button>
+        <p id="lastScore" class="text-xl text-yellow-400 mt-4 hidden"></p>
+    </div>
+</div>
+
+<script>
+    // Firebaseは不要なため、ローカルでゲームロジックを実装します。
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const startButton = document.getElementById('startButton');
+    const scoreDisplay = document.getElementById('scoreDisplay');
+    const lastScoreDisplay = document.getElementById('lastScore');
+    const fuelTimeDisplay = document.getElementById('fuelTimeRemainingDisplay');
+    const fuelBar = document.getElementById('fuelBar');
+
+    // ゲーム定数
+    const GAME_HEIGHT = 600;
+    const GAME_WIDTH = 400; // キャンバスの固定サイズ
+    const LANE_COUNT = 3;
+    const LANE_WIDTH = GAME_WIDTH / LANE_COUNT;
+    const CAR_WIDTH = 40;
+    const CAR_HEIGHT = 70;
+    const FUEL_SIZE = 40; // ガソリンのサイズを大きく
+    const HITBOX_HORIZONTAL_REDUCTION = 5; // 当たり判定を左右から縮小する幅 (合計 10px 縮小)
+    const HITBOX_VERTICAL_REDUCTION = 10;   // 当たり判定を上下から縮小する幅 (合計 20px 縮小)
+    const SCORE_PER_CAR = 50;
+    const MAX_FUEL_TIME = 10000; // 10秒 (ms)
+
+    // 速度と色の定義
+    const SPEED_CONFIGS = [
+        { multiplier: 0.8, color: 'rgb(70, 180, 70)', name: 'Slow' },   // 緑 (遅い)
+        { multiplier: 1.0, color: 'rgb(255, 180, 0)', name: 'Normal' }, // 黄 (普通)
+        { multiplier: 1.2, color: 'rgb(220, 50, 50)', name: 'Fast' }    // 赤 (速い)
+    ];
+
+    // レーンの中心座標
+    const LANE_POSITIONS = Array.from({ length: LANE_COUNT }, (_, i) => 
+        (i * LANE_WIDTH) + (LANE_WIDTH / 2)
+    );
+
+    // ゲーム状態
+    let gameScore = 0;
+    let gameSpeed = 3; // 初期スピード (すべての車に共通のベース速度)
+    let obstacles = [];
+    let lastFuelTime = Date.now();
+    let fuelTimeRemaining = MAX_FUEL_TIME;
+    let isGameOver = true;
+    let animationFrameId = null;
+    let lastTime = 0;
+    let timeElapsed = 0;
+    let spawnCounter = 0;
+
+    // キャンバスサイズをセット
+    canvas.width = GAME_WIDTH;
+    canvas.height = GAME_HEIGHT;
+
+    // --- ゲーム要素のクラス ---
+
+    class PlayerCar {
+        constructor() {
+            this.lane = 1; // 0, 1, 2
+            this.x = LANE_POSITIONS[this.lane] - CAR_WIDTH / 2;
+            this.y = GAME_HEIGHT - CAR_HEIGHT - 30;
+            this.color = '#ff4b2b'; // プレイヤーカラー
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+
+            // 1. 車のボディ (上向きの台形)
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.moveTo(CAR_WIDTH / 4, 0); // 上部左
+            ctx.lineTo(CAR_WIDTH * 3 / 4, 0); // 上部右
+            ctx.lineTo(CAR_WIDTH, CAR_HEIGHT); // 下部右
+            ctx.lineTo(0, CAR_HEIGHT); // 下部左
+            ctx.closePath();
+            ctx.fill();
+
+            // 2. 窓 (簡略化)
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(CAR_WIDTH / 4, 10, CAR_WIDTH / 2, 20);
+            
+            ctx.restore();
+        }
+
+        move(direction) {
+            if (isGameOver) return;
+            // -1: 左, 1: 右
+            const newLane = this.lane + direction;
+            if (newLane >= 0 && newLane < LANE_COUNT) {
+                this.lane = newLane;
+                this.x = LANE_POSITIONS[this.lane] - CAR_WIDTH / 2;
+            }
+        }
+
+        getBoundingBox() {
+            // 当たり判定を内側に縮小
+            return { 
+                x: this.x + HITBOX_HORIZONTAL_REDUCTION, 
+                y: this.y + HITBOX_VERTICAL_REDUCTION, 
+                width: CAR_WIDTH - (HITBOX_HORIZONTAL_REDUCTION * 2), 
+                height: CAR_HEIGHT - (HITBOX_VERTICAL_REDUCTION * 2) 
+            };
+        }
+    }
+
+    class OpposingCar {
+        constructor(lane, speedConfig) {
+            this.lane = lane;
+            this.x = LANE_POSITIONS[lane] - CAR_WIDTH / 2;
+            this.y = -CAR_HEIGHT; // 画面上部からスタート
+            this.width = CAR_WIDTH;
+            this.height = CAR_HEIGHT;
+            // 速度設定から色と速度倍率を取得
+            this.color = speedConfig.color; 
+            this.speedMultiplier = speedConfig.multiplier;
+            this.isCar = true; // 車判定フラグ
+            this.passed = false; // 通過フラグ
+        }
+
+        update(deltaTime) {
+            // ベースのゲームスピードに速度倍率を乗算して移動
+            this.y += gameSpeed * this.speedMultiplier * (deltaTime / 16); 
+        }
+
+        draw() {
+            ctx.save();
+            ctx.translate(this.x, this.y);
+
+            // 車のボディ (下向きの台形 = 対向車として描画)
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.moveTo(0, 0); // 上部左
+            ctx.lineTo(this.width, 0); // 上部右
+            ctx.lineTo(this.width * 3 / 4, this.height); // 下部右 (内側へ)
+            ctx.lineTo(this.width / 4, this.height); // 下部左 (内側へ)
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        getBoundingBox() {
+            // 当たり判定を内側に縮小
+            return { 
+                x: this.x + HITBOX_HORIZONTAL_REDUCTION, 
+                y: this.y + HITBOX_VERTICAL_REDUCTION, 
+                width: CAR_WIDTH - (HITBOX_HORIZONTAL_REDUCTION * 2), 
+                height: CAR_HEIGHT - (HITBOX_VERTICAL_REDUCTION * 2) 
+            };
+        }
+    }
+
+    class Fuel {
+        constructor(lane) {
+            this.lane = lane;
+            // ガソリンは少し大きくして見やすくする
+            this.x = LANE_POSITIONS[lane] - FUEL_SIZE / 2;
+            this.y = -FUEL_SIZE; // 画面上部からスタート
+            this.width = FUEL_SIZE;
+            this.height = FUEL_SIZE;
+            this.color = '#4CAF50'; // ガソリン色 (緑)
+            this.isFuel = true; // ガソリン判定フラグ
+            this.collected = false; // 収集済みフラグ
+        }
+
+        update(deltaTime) {
+            this.y += gameSpeed * (deltaTime / 16);
+        }
+
+        draw() {
+            // 1. ガソリン缶の背景 (緑の四角)
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            // 2. ⛽️シンボルを大きく、明るい黄色で描画
+            ctx.font = `${this.height * 0.7}px sans-serif`; // サイズを調整
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#FFEB3B'; // 明るい黄色
+            ctx.fillText('⛽', this.x + this.width / 2, this.y + this.height / 2 + 2); 
+            
+            // フォントを元に戻す
+            ctx.font = '16px sans-serif'; 
+        }
+
+        getBoundingBox() {
+            return { x: this.x, y: this.y, width: this.width, height: this.height };
+        }
+    }
+
+    // プレイヤーオブジェクト
+    const playerCar = new PlayerCar();
+
+    // --- ゲームロジック ---
+
+    function checkCollision(box1, box2) {
+        return box1.x < box2.x + box2.width &&
+               box1.x + box1.width > box2.x &&
+               box1.y < box2.y + box2.height &&
+               box1.y + box1.height > box2.y;
+    }
+
+    function spawnEntity() {
+        if (isGameOver) return;
+        
+        // 1. 現在、画面上部（出現ポイント付近）に車が存在するレーンを特定する
+        const CAR_CHECK_DISTANCE = CAR_HEIGHT * 1.5; 
+        const currentlyBlockedLanes = new Set();
+        obstacles.forEach(entity => {
+            if (entity.isCar && entity.y < CAR_CHECK_DISTANCE) {
+                currentlyBlockedLanes.add(entity.lane);
+            }
+        });
+
+        const entityType = Math.random();
+
+        // 2. 燃料の出現判定 (15%) 
+        if (entityType < 0.15) { 
+            const lane = Math.floor(Math.random() * LANE_COUNT);
+            obstacles.push(new Fuel(lane));
+            return;
+        } 
+
+        // 3. 車の出現判定 (50%の確率で車を出す)
+        if (Math.random() < 0.50) { 
+            
+            // 利用可能なレーン (現在車がいないレーン) を探す
+            const availableLanes = LANE_POSITIONS.map((_, i) => i).filter(i => !currentlyBlockedLanes.has(i));
+
+            // 3車線すべてが車で埋まるのを避ける
+            if (currentlyBlockedLanes.size >= LANE_COUNT) {
+                 return;
+            }
+
+            // 車の生成が可能な場合
+            if (availableLanes.length > 0) {
+                // ランダムに速度設定を選択
+                const speedConfig = SPEED_CONFIGS[Math.floor(Math.random() * SPEED_CONFIGS.length)];
+                
+                const laneIndex = Math.floor(Math.random() * availableLanes.length);
+                const lane = availableLanes[laneIndex];
+
+                // speedConfigを渡して車を生成
+                obstacles.push(new OpposingCar(lane, speedConfig)); 
+            }
+        }
+    }
+
+    function drawRoad() {
+        // ロードの背景を暗いグレーで塗る
+        ctx.fillStyle = '#444';
+        ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+        // レーンの区切り線
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 5;
+        ctx.setLineDash([40, 20]); // 点線
+
+        for (let i = 1; i < LANE_COUNT; i++) {
+            const x = i * LANE_WIDTH;
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, GAME_HEIGHT);
+            ctx.stroke();
+        }
+
+        // リセット
+        ctx.setLineDash([]);
+        ctx.lineWidth = 1;
+    }
+
+    function updateGame(deltaTime) {
+        if (isGameOver) return;
+
+        // 1. スピードと難易度の上昇 (ベース速度)
+        gameSpeed += (gameScore / 100000) * (deltaTime / 1000);
+
+        // 2. 燃料タイマーの更新
+        timeElapsed += deltaTime;
+        fuelTimeRemaining = MAX_FUEL_TIME - (Date.now() - lastFuelTime);
+        if (fuelTimeRemaining <= 0) {
+            endGame('燃料切れ', `スコア: ${gameScore}`);
+            return;
+        }
+
+        // 3. エンティティの更新と削除
+        const playerBox = playerCar.getBoundingBox();
+        obstacles = obstacles.filter(entity => {
+            entity.update(deltaTime);
+
+            // 衝突判定
+            if (checkCollision(playerBox, entity.getBoundingBox())) {
+                if (entity.isCar) {
+                    // 対向車との衝突
+                    endGame('衝突！', `スコア: ${gameScore}`);
+                    return false; // 衝突した車は削除
+                } else if (entity.isFuel && !entity.collected) {
+                    // ガソリン収集
+                    lastFuelTime = Date.now(); // 燃料タイマーをリセット
+                    entity.collected = true;
+                    // 小さなスコアボーナス
+                    gameScore += 10;
+                }
+            }
+
+            // スコアリング (対向車を避けた場合)
+            if (entity.isCar && !entity.passed && entity.y > playerCar.y) {
+                gameScore += SCORE_PER_CAR;
+                entity.passed = true;
+            }
+
+            // 画面外に出たエンティティを削除
+            return entity.y < GAME_HEIGHT && !entity.collected;
+        });
+
+        // 4. エンティティの生成
+        spawnCounter += deltaTime;
+        // 固定で0.5秒 (500ms) ごとにエンティティ生成を試みる
+        const spawnRate = 500; 
+        if (spawnCounter >= spawnRate) {
+            spawnEntity();
+            spawnCounter -= spawnRate; 
+        }
+
+        // 5. HUDの更新
+        updateHUD();
+    }
+
+    function drawGame() {
+        // 1. 道路を描画
+        drawRoad();
+        
+        // 2. 障害物と燃料を描画
+        obstacles.forEach(entity => entity.draw());
+
+        // 3. プレイヤー車を描画
+        playerCar.draw();
+    }
+
+    function gameLoop(currentTime) {
+        if (isGameOver) return;
+
+        const deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+
+        // 更新と描画
+        updateGame(deltaTime);
+        drawGame();
+
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function updateHUD() {
+        scoreDisplay.textContent = gameScore;
+        
+        // 燃料残り時間を表示
+        const remainingSeconds = Math.max(0, fuelTimeRemaining / 1000).toFixed(1);
+        fuelTimeDisplay.textContent = remainingSeconds;
+        
+        // 燃料ゲージの更新
+        const fuelPercentage = Math.min(100, (fuelTimeRemaining / MAX_FUEL_TIME) * 100);
+        fuelBar.style.width = `${fuelPercentage}%`;
+        
+        // 危険な赤色への変化
+        if (fuelPercentage < 30) {
+            fuelBar.style.backgroundColor = '#FFC107'; // オレンジ
+        }
+        if (fuelPercentage < 10) {
+            fuelBar.style.backgroundColor = '#F44336'; // 赤
+        }
+        if (fuelPercentage >= 30) {
+             fuelBar.style.backgroundColor = '#4CAF50'; // 緑に戻す
+        }
+    }
+
+    function startGame() {
+        // 状態のリセット
+        gameScore = 0;
+        gameSpeed = 3;
+        obstacles = [];
+        lastFuelTime = Date.now();
+        fuelTimeRemaining = MAX_FUEL_TIME;
+        isGameOver = false;
+        lastTime = performance.now();
+        timeElapsed = 0;
+
+        // UIを隠す
+        modal.classList.add('hidden');
+        lastScoreDisplay.classList.add('hidden');
+
+        // プレイヤーの位置をリセット
+        playerCar.lane = 1;
+        playerCar.x = LANE_POSITIONS[1] - CAR_WIDTH / 2;
+
+        // ゲームループ開始
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+
+    function endGame(title, message) {
+        isGameOver = true;
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+
+        // UIの表示
+        modalTitle.textContent = 'ゲームオーバー';
+        modalMessage.textContent = `${title}！頑張りましたね。`;
+        startButton.textContent = 'もう一度プレイ';
+        lastScoreDisplay.textContent = `最終スコア: ${gameScore} ポイント`;
+        lastScoreDisplay.classList.remove('hidden');
+        modal.classList.remove('hidden');
+    }
+
+    // --- イベントリスナー ---
+
+    // キーボード入力
+    document.addEventListener('keydown', (e) => {
+        if (isGameOver) return;
+        if (e.key === 'ArrowLeft') {
+            playerCar.move(-1);
+        } else if (e.key === 'ArrowRight') {
+            playerCar.move(1);
+        }
+    });
+
+    // スタートボタン
+    startButton.addEventListener('click', startGame);
+
+    // 初期ロード時の設定
+    window.onload = function() {
+        // 初期描画
+        drawRoad();
+        playerCar.draw();
+        
+        // モーダル表示
+        modalTitle.textContent = 'カーチェイス';
+        modalMessage.textContent = '矢印キーで車を操作し、対向車を避け、ガソリン（緑の四角）を集めてください。\n車の色によって速度が異なります（緑：遅い、黄：標準、赤：速い）。';
+        startButton.textContent = 'ゲームスタート';
+        modal.classList.remove('hidden');
+        updateHUD(); // HUDの初期値を設定
+    };
+
+</script>
+
+</body>
+</html>
