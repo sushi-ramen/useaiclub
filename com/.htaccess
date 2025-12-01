@@ -1,23 +1,27 @@
-#SSLREDIRECT
+# キャッシュ制御ヘッダー（HTMLファイルをキャッシュさせない）
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|htm)$">
+    Header set Cache-Control "no-store, no-cache, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
+
+# SSL + ドメインリダイレクト（統合版・二重リダイレクト解消）
 <IfModule mod_rewrite.c>
 RewriteEngine On
-RewriteCond %{HTTPS} !on
-RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=302,L]
-</IfModule>
-#SSLREDIRECT
 
-#DOMAINREDIRECT
-<IfModule mod_rewrite.c>
-RewriteEngine On
-RewriteCond %{HTTP_HOST} ^useaiclub.static.jp
-RewriteRule ^(.*) http://useaiclub.com/$1 [R=302,L]
+# HTTPSでない、またはuseaiclub.static.jpの場合、一度でhttps://useaiclub.comへリダイレクト
+RewriteCond %{HTTPS} !on [OR]
+RewriteCond %{HTTP_HOST} ^useaiclub\.static\.jp
+RewriteRule ^(.*)$ https://useaiclub.com/$1 [R=302,L]
 </IfModule>
-#DOMAINREDIRECT
 
+# Nginxキャッシュ設定
 SetEnvIf Request_URI ".*" Ngx_Cache_NoCacheMode=off
 SetEnvIf Request_URI ".*" Ngx_Cache_StaticMode
 
-# HTML Extension Auto-Complete
+# HTML拡張子の自動補完
 <IfModule mod_rewrite.c>
 RewriteEngine On
 RewriteCond %{REQUEST_FILENAME} !-f
