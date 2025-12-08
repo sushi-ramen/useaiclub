@@ -1,31 +1,44 @@
-# キャッシュ制御ヘッダー（HTMLファイルをキャッシュさせない）
+# ----------------------------------------------------------------------
+# 1. キャッシュ制御（Xserverのブラウザキャッシュ設定はOFF前提）
+# ----------------------------------------------------------------------
 <IfModule mod_headers.c>
-  <FilesMatch "\.(html|htm)$">
+  # HTML / PHP / XML などは「キャッシュしない」（即時反映重視）
+  <FilesMatch "\.(html|htm|php|xml)$">
     Header set Cache-Control "no-store, no-cache, must-revalidate"
     Header set Pragma "no-cache"
     Header set Expires "0"
   </FilesMatch>
+
+  # CSS / JS / 画像 / フォント は「1週間キャッシュ」（高速化）
+  # ※更新時はファイル名を変えるかクエリ(?v=...)を変更すること
+  <FilesMatch "\.(css|js|jpg|jpeg|gif|png|svg|webp|ico|woff|woff2|ttf|otf)$">
+    Header set Cache-Control "max-age=604800, public"
+  </FilesMatch>
 </IfModule>
 
-# SSL + ドメインリダイレクト（統合版・二重リダイレクト解消）
+# ----------------------------------------------------------------------
+# 2. リダイレクト設定（統合・最適化版）
+# ----------------------------------------------------------------------
 <IfModule mod_rewrite.c>
 RewriteEngine On
 
-# HTTPSでない、またはuseaiclub.static.jpの場合、一度でhttps://useaiclub.comへリダイレクト
+# HTTP または useaiclub.static.jp からのアクセスを
+# https://useaiclub.com へ「301リダイレクト」
 RewriteCond %{HTTPS} !on [OR]
 RewriteCond %{HTTP_HOST} ^useaiclub\.static\.jp
-RewriteRule ^(.*)$ https://useaiclub.com/$1 [R=302,L]
-</IfModule>
+RewriteRule ^(.*)$ https://useaiclub.com/$1 [R=301,L]
 
-# Nginxキャッシュ設定
-SetEnvIf Request_URI ".*" Ngx_Cache_NoCacheMode=off
-SetEnvIf Request_URI ".*" Ngx_Cache_StaticMode
-
-# HTML拡張子の自動補完
-<IfModule mod_rewrite.c>
-RewriteEngine On
+# HTML拡張子の自動補完（例: /about → /about.html）
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_URI} !\.
 RewriteRule ^(.*)$ $1.html [L]
 </IfModule>
+
+# ----------------------------------------------------------------------
+# 3. Nginxキャッシュ設定（Xserver独自）
+# ----------------------------------------------------------------------
+# HTMLファイルへのアクセス時、Nginx側サーバーキャッシュを無効化
+# （.htaccessでno-cacheしてもNginxがキャッシュしては意味がないため）
+SetEnvIf Request_URI ".*" Ngx_Cache_NoCacheMode=off
+SetEnvIf Request_URI ".*" Ngx_Cache_StaticMode
