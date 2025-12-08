@@ -149,21 +149,27 @@
 <body class="has-fixed-header text-body bg-base">
 
 <!-- ヘッダー -->
-<header id="main-header" class="fixed w-full top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-200">
-    <nav id="main-nav" class="flex items-center justify-between px-6 py-4 transition-all duration-300 container mx-auto">
+<header id="main-header" class="fixed w-full top-0 z-50">
+    <nav id="main-nav" class="flex items-center justify-between px-6 py-4 transition-all duration-300">
         <div class="flex items-center">
-            <a href="index.html" class="text-2xl font-black uppercase tracking-tight interactive flex items-center gap-1 brand-text no-underline">
+            <a href="#" class="text-2xl font-black uppercase tracking-tight interactive flex items-center gap-1 brand-text">
                 <span class="text-primary">USE</span>
                 <span class="text-heading">AI</span>
                 <span class="text-accent">CLUB</span>
             </a>
         </div>
 
+        <!-- デスクトップメニュー -->
         <div class="hidden md:flex items-center space-x-8">
-            <a href="../index.html" class="navigation-link text-sm hover:text-primary transition-colors">home</a>
-
+            <a href="#section-about" class="navigation-link text-sm">useAIクラブとは</a>
+            <a href="__su__shi.html" class="navigation-link text-sm">発起人すっしー</a>
+            <a href="https://useaiclub.connpass.com/" target="_blank" rel="nofollow noopener noreferrer" class="navigation-link text-sm">定例イベント</a>
+            <a href="workshop-games/index.html" class="navigation-link text-sm">AIワークショップ作品</a>
+            <a href="#section-tools" class="navigation-link text-sm">生成AIツールガイド</a>
+            <a href="#section-join" class="button-primary text-sm px-6 py-2">参加する</a>
         </div>
 
+        <!-- モバイルメニューボタン (common.jsで制御) -->
         <button id="mobile-menu-btn" class="md:hidden p-2 text-heading" aria-label="メニューを開く">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -171,10 +177,15 @@
         </button>
     </nav>
 
-    <!-- モバイルメニュー (簡易実装) -->
-    <div id="mobile-menu" class="hidden md:hidden bg-white border-b border-gray-200 p-4 absolute w-full shadow-lg">
+    <!-- モバイルメニュー（初期状態は非表示、common.jsで開閉制御） -->
+    <div id="mobile-menu" class="hidden md:hidden bg-base-alt border-b border-gray-200 p-4 absolute w-full">
         <div class="flex flex-col space-y-4">
-            <a href="index.html" class="block text-sm font-bold text-primary">トップページへ戻る</a>
+            <a href="#section-about" class="navigation-link text-sm">useAIクラブとは</a>
+            <a href="__su__shi.html" class="navigation-link text-sm">発起人すっしー</a>
+            <a href="https://useaiclub.connpass.com/" target="_blank" rel="nofollow noopener noreferrer" class="navigation-link text-sm">定例イベント</a>
+            <a href="workshop-games/index.html" class="navigation-link text-sm">AIワークショップ作品</a>
+            <a href="#section-tools" class="navigation-link text-sm">生成AIツールガイド</a>
+            <a href="#section-join" class="button-primary text-sm px-6 py-2">参加する</a>
         </div>
     </div>
 </header>
