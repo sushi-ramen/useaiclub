@@ -28,20 +28,20 @@
             padding: 40px 20px;
         }
 
-        /* --- 修正: イベントセクションのデザイン強化 --- */
+        /* --- イベントセクションのデザイン --- */
         .event-section-card {
-            background-color: #ffffff; /* 背景を白に */
-            border-radius: 1rem;       /* 角丸 */
-            padding: 40px;             /* 内側の余白 */
-            margin-bottom: 60px;       /* セクション間の余白 */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* 影 */
-            border: 1px solid #E5E7EB; /* 薄い枠線 */
+            background-color: #ffffff;
+            border-radius: 1rem;
+            padding: 40px;
+            margin-bottom: 60px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #E5E7EB;
         }
 
         .event-header {
             margin-bottom: 30px;
             padding-bottom: 20px;
-            border-bottom: 2px solid #F3F4F6; /* ヘッダー下の区切り線 */
+            border-bottom: 2px solid #F3F4F6;
         }
 
         .event-meta {
@@ -64,22 +64,24 @@
             height: 100%;
         }
 
-        /* カードデザイン */
+        /* --- カードデザインの修正 --- */
         .game-card {
             height: 100%;
             display: flex;
             flex-direction: column;
-            background-color: #F9FAFB; /* カード背景を少しグレーに */
+            background-color: #F9FAFB;
             border: 1px solid #E5E7EB;
             border-radius: 0.75rem;
             overflow: hidden;
             transition: all 0.3s ease;
+            position: relative; /* ボタン配置の基準 */
         }
 
+        /* ホバー時の挙動強化 */
         .game-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border-color: var(--color-primary);
+            border-color: var(--color-primary, #4F46E5); /* fallback color added */
         }
 
         .game-image {
@@ -121,8 +123,30 @@
             padding: 10px;
             border-radius: 0.5rem;
             border: 1px solid #E5E7EB;
-            margin-top: auto; /* 下寄せ */
+            margin-bottom: 1rem; /* ボタンとの余白 */
             font-style: italic;
+        }
+
+        /* --- プレイボタン風スタイル --- */
+        .play-button-wrapper {
+            margin-top: auto; /* 一番下に配置 */
+        }
+
+        .play-button-style {
+            display: block;
+            width: 100%;
+            text-align: center;
+            background-color: var(--color-accent, #F97316); /* ボタンカラー */
+            color: #ffffff;
+            font-weight: 700;
+            padding: 10px 0;
+            border-radius: 0.5rem;
+            transition: background-color 0.3s ease;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
         .loading-state {
@@ -132,7 +156,7 @@
 
         @media (max-width: 768px) {
             .event-section-card {
-                padding: 20px; /* スマホでは余白を減らす */
+                padding: 20px;
                 margin-bottom: 40px;
             }
             .games-grid {
@@ -145,7 +169,6 @@
         }
     </style>
 </head>
-<!-- 修正: has-custom-cursor を削除し、bg-base (クリーム色) を適用 -->
 <body class="has-fixed-header text-body bg-base">
 
 <!-- ヘッダー -->
@@ -177,7 +200,7 @@
         </button>
     </nav>
 
-    <!-- モバイルメニュー（初期状態は非表示、common.jsで開閉制御） -->
+    <!-- モバイルメニュー -->
     <div id="mobile-menu" class="hidden md:hidden bg-base-alt border-b border-gray-200 p-4 absolute w-full">
         <div class="flex flex-col space-y-4">
             <a href="#section-about" class="navigation-link text-sm">useAIクラブとは</a>
@@ -197,7 +220,7 @@
                 Works Gallery
             </span>
             <h1 class="text-3xl md:text-4xl font-black text-heading mb-4">useAIクラブ ゲームワークショップ作品集</h1>
-            <p class="text-muted max-w-2xl mx-auto">子供たちが考えたゲームをAIで生成・公開しています。<br>自由な発想とAIのコラボレーションをご覧ください。</p>
+            <p class="text-muted max-w-2xl mx-auto">子供たちが考えたゲームをAIで生成・公開しています。<br>「ゲームを遊ぶ」ボタンを押して、自由な発想を楽しんでください。</p>
         </div>
 
         <div id="loading" class="loading-state">
@@ -239,7 +262,6 @@
 
             allEvents.forEach(({folder, data}) => {
                 let html = `
-                    <!-- 修正: セクション全体をカード化 (.event-section-card) -->
                     <section class="event-section-card">
                         <div class="event-header">
                             <div class="flex items-center justify-between flex-wrap gap-4 mb-2">
@@ -261,11 +283,11 @@
                         creatorInfo += ` （${ageText}${gradeText}）`;
                     }
 
+                    // PromptのHTML生成
                     let promptHtml = g.prompt ? `<div class="game-prompt">「${g.prompt}」</div>` : '';
 
                     html += `
-                        <a href="${folder}/${g.id}.html" class="game-card-link" target="_blank" rel="noopener noreferrer">
-                            <!-- 修正: ゲームカードのデザイン調整 -->
+                        <a href="${folder}/${g.id}.html" class="game-card-link group" target="_blank" rel="noopener noreferrer">
                             <article class="game-card">
                                 <img src="${folder}/${g.id}.png"
                                      alt="${g.title}"
@@ -277,7 +299,16 @@
                                     </div>
                                     <h3 class="game-title">${g.title}</h3>
                                     <p class="game-creator">${creatorInfo}</p>
+
                                     ${promptHtml}
+
+                                    <!-- 修正: プレイボタンを追加 -->
+                                    <div class="play-button-wrapper">
+                                        <span class="play-button-style">
+                                            ゲームを遊ぶ
+                                            <svg class="icon-lg w-5 h-5 shrink-0"  fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        </span>
+                                    </div>
                                 </div>
                             </article>
                         </a>`;
