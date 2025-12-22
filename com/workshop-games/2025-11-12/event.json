@@ -9,7 +9,7 @@
       "id": "kotasan",
       "creator": "こたさん",
       "age": 17,
-      "grade": "高１",
+      "grade": "",
       "ai": "Gemini 2.5 Flash",
       "prompt": "カーチェイス：対向車を避けろ",
       "title": "ガソリンカーチェイス"
@@ -18,7 +18,7 @@
       "id": "solaris",
       "creator": "solaris",
       "age": 12,
-      "grade": "小学校6年生",
+      "grade": "",
       "ai": "Gemini 2.5 Flash",
       "prompt": "フォロワー・ラッシュ",
       "title": "今日の1日の運勢がわかる占いゲーム"
@@ -27,7 +27,7 @@
       "id": "bom_bom",
       "creator": "bom bom",
       "age": 12,
-      "grade": "小学校6年生",
+      "grade": "",
       "ai": "Gemini 2.5 Flash",
       "prompt": "岐阜県が愛知県を食べるゲーム",
       "title": "岐阜県が愛知県を食べるゲーム"
@@ -36,7 +36,7 @@
       "id": "nnto",
       "creator": "nnto",
       "age": 13,
-      "grade": "中学校1年生",
+      "grade": "",
       "ai": "Gemini 2.5 Flash",
       "prompt": "ハズレを探せ！",
       "title": "6/9(9分の6)"
