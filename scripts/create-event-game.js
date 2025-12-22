@@ -37,6 +37,7 @@ const eventTemplate = {
     eventDate: eventDate,
     eventDescription: "イベントの説明を入力してください",
     eventURL: "",
+    eventImage:`${eventDate}.png`,
     games: [
         {
             id: "sample001",

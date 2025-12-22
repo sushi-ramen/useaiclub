@@ -270,6 +270,18 @@
                                     📅 ${data.eventDate}
                                 </span>
                             </div>
+                               <!-- イベント画像 -->
+        ${data.eventImage ? `
+          <div class="event-hero-wrapper mb-4">
+            <img src="${folder}/${data.eventImage}"
+                 alt="${data.eventName}のイメージ"
+                 class="event-hero-image"
+                 onerror="this.style.display='none'">
+          </div>` : ''}
+        <p class="text-body leading-relaxed mb-4">${data.eventDescription}</p>
+        ${data.eventURL ? `<a href="${data.eventURL}" class="text-accent hover:text-accent-hover font-bold inline-flex items-center gap-1 no-underline hover:underline" target="_blank" rel="noopener noreferrer">イベント詳細を見る …</a>` : ''}
+    </div>
+    <div class="games-grid">
                             <p class="text-body leading-relaxed mb-4">${data.eventDescription}</p>
                             ${data.eventURL ? `<a href="${data.eventURL}" class="text-accent hover:text-accent-hover font-bold inline-flex items-center gap-1 no-underline hover:underline" target="_blank" rel="noopener noreferrer">イベント詳細を見る <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>` : ''}
                         </div>
@@ -302,7 +314,7 @@
 
                                     ${promptHtml}
 
-                                    <!-- 修正: プレイボタンを追加 -->
+                                    <!-- プレイボタン -->
                                     <div class="play-button-wrapper">
                                         <span class="play-button-style">
                                             ゲームを遊ぶ

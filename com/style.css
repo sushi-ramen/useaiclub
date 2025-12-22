@@ -743,3 +743,9 @@ button:hover ~ .custom-cursor {
 .icon { width: var(--icon-size-md); height: var(--icon-size-md); }
 .icon-sm { width: var(--icon-size-sm); height: var(--icon-size-sm); }
 .icon-lg { width: var(--icon-size-lg); height: var(--icon-size-lg); }
+
+/* =========================================
+    イベント画像
+    ========================================= */
+.event-hero-wrapper { overflow: hidden; border-radius: 12px; }
+.event-hero-image { width: 100%; height: auto; display: block; }
