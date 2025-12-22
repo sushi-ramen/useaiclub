@@ -5,40 +5,40 @@
   "eventURL": "",
   "games": [
     {
-      "id": "01",
-      "creator": "たろう",
-      "age": 9,
-      "grade": "小学3年生",
+      "id": "kotasan",
+      "creator": "こたさん",
+      "age": 17,
+      "grade": "高１",
       "ai": "Gemini 2.5 Flash",
-      "prompt": "カーチェイスゲーム",
-      "title": "カーチェイスゲーム"
+      "prompt": "カーチェイス：対向車を避けろ",
+      "title": "ガソリンカーチェイス"
     },
     {
-      "id": "02",
-      "creator": "はなこ",
-      "age": 10,
-      "grade": "小学4年生",
+      "id": "solaris",
+      "creator": "solaris",
+      "age": 12,
+      "grade": "小学校6年生",
       "ai": "Gemini 2.5 Flash",
-      "prompt": "フォロワーを集めてボスを倒すゲーム",
-      "title": "フォロワーを集めてボスを倒すゲーム"
+      "prompt": "フォロワー・ラッシュ",
+      "title": "今日の1日の運勢がわかる占いゲーム"
     },
     {
-      "id": "03",
-      "creator": "たろう",
-      "age": 9,
-      "grade": "小学3年生",
+      "id": "bom_bom",
+      "creator": "bom bom",
+      "age": 12,
+      "grade": "小学校6年生",
       "ai": "Gemini 2.5 Flash",
       "prompt": "岐阜県が愛知県を食べるゲーム",
       "title": "岐阜県が愛知県を食べるゲーム"
     },
     {
-      "id": "04",
-      "creator": "はなこ",
-      "age": 10,
-      "grade": "小学4年生",
+      "id": "nnto",
+      "creator": "nnto",
+      "age": 13,
+      "grade": "中学校1年生",
       "ai": "Gemini 2.5 Flash",
       "prompt": "ハズレを探せ！",
-      "title": "ハズレを探せ！"
+      "title": "6/9(9分の6)"
     }
   ]
 }
